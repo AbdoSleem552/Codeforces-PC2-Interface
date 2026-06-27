@@ -70,6 +70,9 @@ window.PC2.State = (function () {
     const isBeforeContest = isCountdown && problems.length === 0;
     const isContestRunning = isCountdown && problems.length > 0;
 
+    const loginLink = document.querySelector('.lang-chooser a[href*="/enter"], a[href*="/enter"]');
+    const isLoggedIn = !loginLink;
+
     return {
         isContestPage,
         contestId,
@@ -82,6 +85,7 @@ window.PC2.State = (function () {
         countdownSeconds,
         problems,
         isBeforeContest,
-        isContestRunning
+        isContestRunning,
+        isLoggedIn
     };
 })();

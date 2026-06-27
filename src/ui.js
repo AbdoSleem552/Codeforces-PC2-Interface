@@ -1,37 +1,37 @@
 window.PC2 = window.PC2 || {};
 
-window.PC2.UI = (function() {
-    const State = window.PC2.State;
+window.PC2.UI = (function () {
+  const State = window.PC2.State;
 
-    function injectStyles() {
-        if (document.querySelector('link.pc2-style')) return;
-        const link = document.createElement('link');
-        link.className = 'pc2-style';
-        link.rel = 'stylesheet';
-        link.type = 'text/css';
-        const stylesURL = document.documentElement.getAttribute('data-pc2-styles-url') || '';
-        link.href = stylesURL;
-        document.head.appendChild(link);
+  function injectStyles() {
+    if (document.querySelector('link.pc2-style')) return;
+    const link = document.createElement('link');
+    link.className = 'pc2-style';
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    const stylesURL = document.documentElement.getAttribute('data-pc2-styles-url') || '';
+    link.href = stylesURL;
+    document.head.appendChild(link);
+  }
+
+  function buildBody(container) {
+    let opts = '<option value="">Select Problem</option>';
+    let clarOpts = '<option value="General">General</option>';
+    if (State.isBeforeContest) {
+      opts = '<option value="">Contest not started</option>';
+      clarOpts = '<option value="General">General (Contest not started)</option>';
+    } else {
+      State.problems.forEach(({ letter, name }) => {
+        opts += `<option value="${letter}">${letter} - ${name}</option>`;
+        clarOpts += `<option value="${letter}">${letter} - ${name}</option>`;
+      });
     }
 
-    function buildBody(container) {
-        let opts = '<option value="">Select Problem</option>';
-        let clarOpts = '<option value="General">General</option>';
-        if (State.isBeforeContest) {
-            opts = '<option value="">Contest not started</option>';
-            clarOpts = '<option value="General">General (Contest not started)</option>';
-        } else {
-            State.problems.forEach(({ letter, name }) => {
-                opts += `<option value="${letter}">${letter} - ${name}</option>`;
-                clarOpts += `<option value="${letter}">${letter} - ${name}</option>`;
-            });
-        }
-
-        const target = container || document.body;
-        if (target === document.body) {
-            document.body.className = '';
-        }
-        target.innerHTML = `
+    const target = container || document.body;
+    if (target === document.body) {
+      document.body.className = '';
+    }
+    target.innerHTML = `
         <div class="app-resizer" id="app-resizer">
           <div class="app-window" id="app-window">
             <div class="title-bar">
@@ -235,114 +235,113 @@ window.PC2.UI = (function() {
           </div>
         </div>
         <div id="toast"></div>`;
+  }
+
+  function showToast(msg, ok) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = ok ? 'ok' : '';
+    t.style.display = 'block';
+    clearTimeout(t._t);
+    t._t = setTimeout(() => { t.style.display = 'none'; }, 3500);
+  }
+
+  function makeDraggable(el, handle) {
+    let drag = false, sx, sy, il, it;
+    handle.addEventListener('mousedown', e => {
+      drag = true; sx = e.clientX; sy = e.clientY;
+      il = el.offsetLeft; it = el.offsetTop;
+      document.addEventListener('mousemove', mv);
+      document.addEventListener('mouseup', up);
+    });
+    function mv(e) {
+      if (!drag) return;
+      el.style.left = (il + e.clientX - sx) + 'px';
+      el.style.top = (it + e.clientY - sy) + 'px';
     }
-
-    function showToast(msg, ok) {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.className = ok ? 'ok' : '';
-        t.style.display = 'block';
-        clearTimeout(t._t);
-        t._t = setTimeout(() => { t.style.display = 'none'; }, 3500);
+    function up() {
+      drag = false;
+      document.removeEventListener('mousemove', mv);
+      document.removeEventListener('mouseup', up);
     }
+  }
 
-    function makeDraggable(el, handle) {
-        let drag = false, sx, sy, il, it;
-        handle.addEventListener('mousedown', e => {
-            drag = true; sx = e.clientX; sy = e.clientY;
-            il = el.offsetLeft; it = el.offsetTop;
-            document.addEventListener('mousemove', mv);
-            document.addEventListener('mouseup', up);
-        });
-        function mv(e) {
-            if (!drag) return;
-            el.style.left = (il + e.clientX - sx) + 'px';
-            el.style.top = (it + e.clientY - sy) + 'px';
-        }
-        function up() {
-            drag = false;
-            document.removeEventListener('mousemove', mv);
-            document.removeEventListener('mouseup', up);
-        }
-    }
+  function showDialog({ runId, problem, language }) {
+    document.getElementById('pc2-judgement-dialog')?.remove();
+    document.getElementById('pc2-overlay')?.remove();
 
-    function showDialog({ runId, problem, language }) {
-        document.getElementById('pc2-judgement-dialog')?.remove();
-        document.getElementById('pc2-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'pc2-overlay';
+    overlay.className = 'pc2-overlay';
+    document.body.appendChild(overlay);
 
-        const overlay = document.createElement('div');
-        overlay.id = 'pc2-overlay';
-        overlay.className = 'pc2-overlay';
-        document.body.appendChild(overlay);
+    const dialog = document.createElement('div');
+    dialog.id = 'pc2-judgement-dialog';
+    dialog.className = 'pc2-dialog';
+    dialog.style.left = ((window.innerWidth - 330) / 2) + 'px';
+    dialog.style.top = ((window.innerHeight - 270) / 2) + 'px';
 
-        const dialog = document.createElement('div');
-        dialog.id = 'pc2-judgement-dialog';
-        dialog.className = 'pc2-dialog';
-        dialog.style.left = ((window.innerWidth - 330) / 2) + 'px';
-        dialog.style.top = ((window.innerHeight - 270) / 2) + 'px';
+    const header = document.createElement('div');
+    header.className = 'pc2-header';
+    header.innerHTML = '<div class="pc2-header-title"><span>&#9749;</span> Run Submitted</div>';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'pc2-close';
+    closeBtn.textContent = '×';
+    header.appendChild(closeBtn);
 
-        const header = document.createElement('div');
-        header.className = 'pc2-header';
-        header.innerHTML = '<div class="pc2-header-title"><span>&#9749;</span> Run Submitted</div>';
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'pc2-close';
-        closeBtn.textContent = '×';
-        header.appendChild(closeBtn);
-
-        const body = document.createElement('div');
-        body.className = 'pc2-body';
-        body.innerHTML = `
+    const body = document.createElement('div');
+    body.className = 'pc2-body';
+    body.innerHTML = `
             <div class="pc2-header-text"><div class="info-icon">i</div>Run Submission Received</div>
             <div class="pc2-row">Problem: <span class="val-blue">${problem}</span></div>
             <div class="pc2-row">Language: <span class="val-blue">${language}</span></div>
             <div class="pc2-row">Run Id: <span class="val-blue">${runId}</span></div>`;
 
-        const footer = document.createElement('div');
-        footer.className = 'pc2-footer';
-        const okBtn = document.createElement('button');
-        okBtn.className = 'pc2-ok-btn';
-        okBtn.textContent = 'OK';
-        footer.appendChild(okBtn);
+    const footer = document.createElement('div');
+    footer.className = 'pc2-footer';
+    const okBtn = document.createElement('button');
+    okBtn.className = 'pc2-ok-btn';
+    okBtn.textContent = 'OK';
+    footer.appendChild(okBtn);
 
-        dialog.appendChild(header);
-        dialog.appendChild(body);
-        dialog.appendChild(footer);
-        document.body.appendChild(dialog);
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(footer);
+    document.body.appendChild(dialog);
 
-        function close() { dialog.remove(); overlay.remove(); }
-        closeBtn.addEventListener('click', close);
-        okBtn.addEventListener('click', close);
-        overlay.addEventListener('click', close);
-        makeDraggable(dialog, header);
-    }
+    function close() { dialog.remove(); overlay.remove(); }
+    closeBtn.addEventListener('click', close);
+    okBtn.addEventListener('click', close);
+    makeDraggable(dialog, header);
+  }
 
-    function showVerdictDialog({ runId, problem, language, verdictText, verdictColor }) {
-        document.getElementById('pc2-verdict-dialog')?.remove();
-        document.getElementById('pc2-verdict-overlay')?.remove();
+  function showVerdictDialog({ runId, problem, language, verdictText, verdictColor }) {
+    document.getElementById('pc2-verdict-dialog')?.remove();
+    document.getElementById('pc2-verdict-overlay')?.remove();
 
-        const overlay = document.createElement('div');
-        overlay.id = 'pc2-verdict-overlay';
-        overlay.className = 'pc2-overlay';
-        document.body.appendChild(overlay);
+    const overlay = document.createElement('div');
+    overlay.id = 'pc2-verdict-overlay';
+    overlay.className = 'pc2-overlay';
+    document.body.appendChild(overlay);
 
-        const dialog = document.createElement('div');
-        dialog.id = 'pc2-verdict-dialog';
-        dialog.className = 'pc2-dialog';
-        dialog.style.width = '420px';
-        dialog.style.left = (Math.max(20, (window.innerWidth - 420) / 2 + 30)) + 'px';
-        dialog.style.top = (Math.max(20, (window.innerHeight - 300) / 2 + 30)) + 'px';
+    const dialog = document.createElement('div');
+    dialog.id = 'pc2-verdict-dialog';
+    dialog.className = 'pc2-dialog';
+    dialog.style.width = '420px';
+    dialog.style.left = (Math.max(20, (window.innerWidth - 420) / 2 + 30)) + 'px';
+    dialog.style.top = (Math.max(20, (window.innerHeight - 300) / 2 + 30)) + 'px';
 
-        const header = document.createElement('div');
-        header.className = 'pc2-header';
-        header.innerHTML = '<div class="pc2-header-title"><span>&#9749;</span> Run Judgement Received</div>';
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'pc2-close';
-        closeBtn.textContent = '×';
-        header.appendChild(closeBtn);
+    const header = document.createElement('div');
+    header.className = 'pc2-header';
+    header.innerHTML = '<div class="pc2-header-title"><span>&#9749;</span> Run Judgement Received</div>';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'pc2-close';
+    closeBtn.textContent = '×';
+    header.appendChild(closeBtn);
 
-        const body = document.createElement('div');
-        body.className = 'pc2-body';
-        body.innerHTML = `
+    const body = document.createElement('div');
+    body.className = 'pc2-body';
+    body.innerHTML = `
             <div class="pc2-header-text"><div class="info-icon">i</div>Judge's Response</div>
             <div class="pc2-row">Problem: <span class="val-blue">${problem}</span></div>
             <div class="pc2-row">Language: <span class="val-blue">${language}</span></div>
@@ -351,94 +350,154 @@ window.PC2.UI = (function() {
               <span style="color:${verdictColor}; font-size:16px;">${verdictText}</span>
             </div>`;
 
-        const footer = document.createElement('div');
-        footer.className = 'pc2-footer';
-        const okBtn = document.createElement('button');
-        okBtn.className = 'pc2-ok-btn';
-        okBtn.textContent = 'OK';
-        footer.appendChild(okBtn);
+    const footer = document.createElement('div');
+    footer.className = 'pc2-footer';
+    const okBtn = document.createElement('button');
+    okBtn.className = 'pc2-ok-btn';
+    okBtn.textContent = 'OK';
+    footer.appendChild(okBtn);
 
-        dialog.appendChild(header);
-        dialog.appendChild(body);
-        dialog.appendChild(footer);
-        document.body.appendChild(dialog);
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(footer);
+    document.body.appendChild(dialog);
 
-        function close() { dialog.remove(); overlay.remove(); }
-        closeBtn.addEventListener('click', close);
-        okBtn.addEventListener('click', close);
-        overlay.addEventListener('click', close);
-        makeDraggable(dialog, header);
-    }
+    function close() { dialog.remove(); overlay.remove(); }
+    closeBtn.addEventListener('click', close);
+    okBtn.addEventListener('click', close);
+    makeDraggable(dialog, header);
+  }
 
-    function showConfirmDialog({ problem, language, filename, onConfirm, onCancel }) {
-        document.getElementById('pc2-confirm-dialog')?.remove();
-        document.getElementById('pc2-confirm-overlay')?.remove();
+  function showConfirmDialog({ problem, language, filename, onConfirm, onCancel }) {
+    document.getElementById('pc2-confirm-dialog')?.remove();
+    document.getElementById('pc2-confirm-overlay')?.remove();
 
-        const overlay = document.createElement('div');
-        overlay.id = 'pc2-confirm-overlay';
-        overlay.className = 'pc2-overlay';
-        document.body.appendChild(overlay);
+    const overlay = document.createElement('div');
+    overlay.id = 'pc2-confirm-overlay';
+    overlay.className = 'pc2-overlay';
+    document.body.appendChild(overlay);
 
-        const dialog = document.createElement('div');
-        dialog.id = 'pc2-confirm-dialog';
-        dialog.className = 'pc2-dialog';
-        dialog.style.left = ((window.innerWidth - 330) / 2) + 'px';
-        dialog.style.top = ((window.innerHeight - 250) / 2) + 'px';
+    const dialog = document.createElement('div');
+    dialog.id = 'pc2-confirm-dialog';
+    dialog.className = 'pc2-dialog';
+    dialog.style.left = ((window.innerWidth - 330) / 2) + 'px';
+    dialog.style.top = ((window.innerHeight - 250) / 2) + 'px';
 
-        const header = document.createElement('div');
-        header.className = 'pc2-header';
-        header.innerHTML = '<div class="pc2-header-title"><span>&#9749;</span> Confirm Submit</div>';
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'pc2-close';
-        closeBtn.textContent = '×';
-        header.appendChild(closeBtn);
+    const header = document.createElement('div');
+    header.className = 'pc2-header';
+    header.innerHTML = '<div class="pc2-header-title"><span>&#9749;</span> Confirm Submit</div>';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'pc2-close';
+    closeBtn.textContent = '×';
+    header.appendChild(closeBtn);
 
-        const body = document.createElement('div');
-        body.className = 'pc2-body';
-        body.innerHTML = `
+    const body = document.createElement('div');
+    body.className = 'pc2-body';
+    body.innerHTML = `
             <div class="pc2-header-text"><div class="info-icon">?</div>Submit Solution?</div>
             <div class="pc2-row" style="font-size:13px; margin-bottom:10px;">Are you sure you want to submit?</div>
             <div class="pc2-row" style="font-size:12px; margin-bottom:6px;">Problem: <span class="val-blue">${problem}</span></div>
             <div class="pc2-row" style="font-size:12px; margin-bottom:6px;">Language: <span class="val-blue">${language}</span></div>
             <div class="pc2-row" style="font-size:12px; margin-bottom:6px;">File: <span class="val-blue">${filename}</span></div>`;
 
-        const footer = document.createElement('div');
-        footer.className = 'pc2-footer';
-        footer.style.gap = '15px';
+    const footer = document.createElement('div');
+    footer.className = 'pc2-footer';
+    footer.style.gap = '15px';
 
-        const yesBtn = document.createElement('button');
-        yesBtn.className = 'pc2-ok-btn';
-        yesBtn.id = 'confirm-yes-btn';
-        yesBtn.style.cssText = 'background: #2e7d32; color: #fff; border: 1px solid #1b5e20; box-shadow: inset 1px 1px 0 #4caf50, inset -1px -1px 0 #0d3c0e; font-weight: bold; padding: 4px 22px;';
-        yesBtn.textContent = 'Yes';
+    const yesBtn = document.createElement('button');
+    yesBtn.className = 'pc2-ok-btn';
+    yesBtn.id = 'confirm-yes-btn';
+    yesBtn.style.cssText = 'background: #2e7d32; color: #fff; border: 1px solid #1b5e20; box-shadow: inset 1px 1px 0 #4caf50, inset -1px -1px 0 #0d3c0e; font-weight: bold; padding: 4px 22px;';
+    yesBtn.textContent = 'Yes';
 
-        const noBtn = document.createElement('button');
-        noBtn.className = 'pc2-ok-btn';
-        noBtn.id = 'confirm-no-btn';
-        noBtn.textContent = 'No';
+    const noBtn = document.createElement('button');
+    noBtn.className = 'pc2-ok-btn';
+    noBtn.id = 'confirm-no-btn';
+    noBtn.textContent = 'No';
 
-        footer.appendChild(yesBtn);
-        footer.appendChild(noBtn);
+    footer.appendChild(yesBtn);
+    footer.appendChild(noBtn);
 
-        dialog.appendChild(header);
-        dialog.appendChild(body);
-        dialog.appendChild(footer);
-        document.body.appendChild(dialog);
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(footer);
+    document.body.appendChild(dialog);
 
-        function closeDialog() { dialog.remove(); overlay.remove(); }
-        closeBtn.addEventListener('click', () => { closeDialog(); if (onCancel) onCancel(); });
-        noBtn.addEventListener('click', () => { closeDialog(); if (onCancel) onCancel(); });
-        yesBtn.addEventListener('click', () => { closeDialog(); if (onConfirm) onConfirm(); });
-        overlay.addEventListener('click', () => { closeDialog(); if (onCancel) onCancel(); });
-        makeDraggable(dialog, header);
-    }
+    function closeDialog() { dialog.remove(); overlay.remove(); }
+    closeBtn.addEventListener('click', () => { closeDialog(); if (onCancel) onCancel(); });
+    noBtn.addEventListener('click', () => { closeDialog(); if (onCancel) onCancel(); });
+    yesBtn.addEventListener('click', () => { closeDialog(); if (onConfirm) onConfirm(); });
+    makeDraggable(dialog, header);
+  }
 
-    return {
-        injectStyles,
-        buildBody,
-        showToast,
-        showDialog,
-        showVerdictDialog,
-        showConfirmDialog
-    };
+  function showLoginOverlay() {
+    document.getElementById('pc2-login-overlay')?.remove();
+    document.getElementById('pc2-login-dialog')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'pc2-login-overlay';
+    overlay.className = 'pc2-overlay';
+    overlay.style.zIndex = '9999';
+    overlay.style.background = 'transparent';
+    document.body.appendChild(overlay);
+
+    const dialog = document.createElement('div');
+    dialog.id = 'pc2-login-dialog';
+    dialog.className = 'pc2-dialog';
+    dialog.style.zIndex = '10000';
+    dialog.style.left = ((window.innerWidth - 330) / 2) + 'px';
+    dialog.style.top = ((window.innerHeight - 200) / 2) + 'px';
+
+    const header = document.createElement('div');
+    header.className = 'pc2-header';
+    header.innerHTML = '<div class="pc2-header-title"><span>&#9749;</span> Authentication Required</div>';
+
+    const body = document.createElement('div');
+    body.className = 'pc2-body';
+    body.innerHTML =
+      '<div class="pc2-header-text"><div class="info-icon" style="background:#cc0000;color:white;border:none;">!</div>Not Logged In</div>' +
+      '<div class="pc2-row" style="margin-top:20px; font-size:13px; text-align:center;">' +
+      'You must login to Codeforces to use the PC^2 interface.' +
+      '</div>';
+
+    const footer = document.createElement('div');
+    footer.className = 'pc2-footer';
+    footer.style.justifyContent = 'center';
+    footer.style.gap = '15px';
+
+    const loginBtn = document.createElement('button');
+    loginBtn.className = 'pc2-ok-btn';
+    loginBtn.textContent = 'Go to Login';
+    loginBtn.addEventListener('click', () => {
+      window.open('/enter?back=' + encodeURIComponent(window.location.pathname), '_blank');
+    });
+
+    const checkBtn = document.createElement('button');
+    checkBtn.className = 'pc2-ok-btn';
+    checkBtn.textContent = 'I have logged in';
+    checkBtn.style.background = '#2e7d32';
+    checkBtn.style.borderColor = '#1b5e20';
+    checkBtn.style.color = '#fff';
+    checkBtn.addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    footer.appendChild(loginBtn);
+    footer.appendChild(checkBtn);
+
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(footer);
+    document.body.appendChild(dialog);
+  }
+
+  return {
+    injectStyles,
+    buildBody,
+    showToast,
+    showDialog,
+    showVerdictDialog,
+    showConfirmDialog,
+    showLoginOverlay
+  };
 })();

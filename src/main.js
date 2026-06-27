@@ -55,7 +55,7 @@ window.PC2.Main = (function () {
             clarsTbody.addEventListener('click', (e) => {
                 const tr = e.target.closest('tr');
                 if (!tr || !tr.dataset.id) return;
-                
+
                 clarsTbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
                 tr.classList.add('selected-row');
 
@@ -286,7 +286,7 @@ window.PC2.Main = (function () {
                             const doc = new DOMParser().parseFromString(myHtml, 'text/html');
                             const cell = doc.querySelector('table[class*="status"] tr:not(:first-child) td:first-child');
                             if (cell) runId = cell.textContent.trim();
-                        } catch (_) {}
+                        } catch (_) { }
 
                         UI.showDialog({ runId, problem: problemLetter, language: langText });
                         API.pollVerdict(runId, problemLetter, langText);
@@ -318,6 +318,34 @@ window.PC2.Main = (function () {
 
         UI.injectStyles();
         UI.buildBody();
+
+        const savedFancyBg = localStorage.getItem('pc2_fancy_bg') !== 'false';
+        if (savedFancyBg) document.body.classList.add('fancy-bg');
+
+        if (!State.isLoggedIn) {
+            const savedScale = parseFloat(localStorage.getItem('pc2_scale') || '1.0');
+            const appWin = document.getElementById('app-window');
+            const resizer = document.getElementById('app-resizer');
+            if (appWin && resizer) {
+                let lastH = 0;
+                const applyS = () => {
+                    appWin.style.transform = `scale(${savedScale})`;
+                    resizer.style.width = (620 * savedScale) + 'px';
+                    resizer.style.height = (appWin.offsetHeight * savedScale) + 'px';
+                };
+                new ResizeObserver(() => {
+                    if (appWin.offsetHeight !== lastH) {
+                        lastH = appWin.offsetHeight;
+                        applyS();
+                    }
+                }).observe(appWin);
+                applyS();
+            }
+
+            UI.showLoginOverlay();
+            return;
+        }
+
         wireEvents();
     }
 
