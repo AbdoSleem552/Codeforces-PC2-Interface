@@ -12,7 +12,7 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
     let isCountdown = !!countdownEl;
     let countdownRedirect = isCountdown ? countdownEl.getAttribute('redirectUrl') : '';
     let countdownSeconds = 0;
-    
+
     if (isCountdown) {
         const text = countdownEl.textContent.trim(); // "00:02:01" or "1 day 02:00:01"
         const parts = text.split(':');
@@ -53,7 +53,9 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
         s.textContent = `
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #2c2c2c; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .app-window { width: 620px; background: #e4e7ec; border: 1px solid #000; border-radius: 4px 4px 0 0; box-shadow: 0 6px 18px rgba(0,0,0,.6); overflow: hidden; }
+        .fancy-bg { background-color: #1a1a2e !important; background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='40' y='60' font-family='sans-serif' font-weight='bold' font-size='28' fill='%2300aa00' opacity='0.15'%3EAccepted%3C/text%3E%3Ctext x='200' y='200' font-family='sans-serif' font-weight='bold' font-size='28' fill='%23cc0000' opacity='0.15'%3EWrong Answer%3C/text%3E%3Ctext x='60' y='320' font-family='sans-serif' font-weight='bold' font-size='28' fill='%23cc0000' opacity='0.15'%3ETLE%3C/text%3E%3Cg opacity='0.25'%3E%3Cellipse cx='300' cy='80' rx='20' ry='25' fill='%23ff3333'/%3E%3Cpath d='M300,105 Q285,130 310,150' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/g%3E%3Cg opacity='0.25'%3E%3Cellipse cx='100' cy='180' rx='20' ry='25' fill='%233333ff'/%3E%3Cpath d='M100,205 Q115,230 90,250' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/g%3E%3Cg opacity='0.25'%3E%3Cellipse cx='320' cy='320' rx='20' ry='25' fill='%2333ff33'/%3E%3Cpath d='M320,345 Q305,370 330,390' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E") !important; background-attachment: fixed !important; }
+        .app-resizer { width: 620px; overflow: hidden; background: #e4e7ec; border: 1px solid #000; border-radius: 4px 4px 0 0; box-shadow: 0 6px 18px rgba(0,0,0,.6); transition: width 0.15s ease, height 0.15s ease; }
+        .app-window { width: 620px; transform-origin: top left; background: transparent; transition: transform 0.15s ease; }
         .title-bar { background: linear-gradient(to right,#1a3a6e,#2b4478); color: #fff; padding: 6px 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; user-select: none; }
         .title-bar-text { font-weight: bold; display: flex; align-items: center; gap: 6px; }
         .title-bar-controls button { background: transparent; border: none; color: #fff; font-size: 13px; cursor: pointer; padding: 1px 6px; border-radius: 2px; }
@@ -129,9 +131,10 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
 
         document.body.className = '';
         document.body.innerHTML = `
-        <div class="app-window">
-          <div class="title-bar">
-            <div class="title-bar-text">&#9749; PC^2 TEAM 1 (Site 1) [RUNNING] 9.10.0-7065</div>
+        <div class="app-resizer" id="app-resizer">
+          <div class="app-window" id="app-window">
+            <div class="title-bar">
+              <div class="title-bar-text">&#9749; PC^2 TEAM 1 (Site 1) [RUNNING] 9.10.0-7065</div>
             <div class="title-bar-controls">
               <button>_</button><button>&#9633;</button><button id="btn-close">&#x2715;</button>
             </div>
@@ -146,7 +149,7 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
               <div class="tab" data-target="tab-runs">View Runs</div>
               <div class="tab">Request Clarification</div>
               <div class="tab">View Clarifications</div>
-              <div class="tab">Options</div>
+              <div class="tab" data-target="tab-options">Options</div>
               <div class="tab" data-target="tab-about">About</div>
             </div>
             
@@ -229,6 +232,27 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
                </div>
             </div>
 
+            <div id="tab-options" class="tab-content" style="padding: 25px 30px;">
+              <h2 style="font-size: 16px; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">PC^2 Options</h2>
+              
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label style="font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="opt-fancy-bg" style="cursor: pointer; width: 16px; height: 16px;" />
+                  Enable Fancy Background (Balloons & Verdicts)
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 8px;">
+                  Window Scale: <span id="opt-scale-val">100%</span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <input type="range" id="opt-scale" min="0.5" max="2.0" step="0.05" value="1.0" style="width: 250px; cursor: pointer;" />
+                  <button class="win-btn" id="opt-scale-reset" style="min-width: 60px; padding: 2px 10px;">Reset</button>
+                </div>
+              </div>
+            </div>
+
             <div id="tab-about" class="tab-content" style="padding: 25px 30px;">
               <div style="display: flex; gap: 20px; align-items: flex-start;">
                 <div style="font-size: 48px;">&#9749;</div>
@@ -249,6 +273,7 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
             <span class="status-cell" id="status-problem">Problem: —</span>
             <span class="status-cell" id="status-lang">Language: G++23</span>
             <span class="status-cell" id="status-file">File: —</span>
+          </div>
           </div>
         </div>
         <div id="toast"></div>`;
@@ -474,18 +499,18 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
             const html = await fetch(`https://codeforces.com/contest/${contestId}/my`, { credentials: 'include' }).then(r => r.text());
             const doc = new DOMParser().parseFromString(html, 'text/html');
             const rows = doc.querySelectorAll('table.status-frame-datatable tr[data-submission-id]');
-            
+
             tbody.innerHTML = '';
             let count = 0;
 
             rows.forEach(row => {
                 const runId = row.getAttribute('data-submission-id');
-                
+
                 // Extract time. "Jun/27/2026 04:11" -> "04:11" or just show full time
                 const timeCell = row.querySelector('.status-small .format-time');
                 let timeText = timeCell ? timeCell.textContent.trim() : '';
-                if(timeText.includes(' ')) timeText = timeText.split(' ').pop(); // Just extract "04:11" for a cleaner table
-                
+                if (timeText.includes(' ')) timeText = timeText.split(' ').pop(); // Just extract "04:11" for a cleaner table
+
                 // Extract problem letter from link href or text
                 const probLink = row.querySelector('td[data-problemId] a');
                 let probLetter = '';
@@ -570,8 +595,8 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
         // ── Tabs Switching ──
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                if(!tab.dataset.target) return; // ignore unimplemented tabs
-                
+                if (!tab.dataset.target) return; // ignore unimplemented tabs
+
                 // update tab styling
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
@@ -587,16 +612,74 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
             });
         });
 
+        // ── Options Tab & Scaling Logic ──
+        const optFancyBg = document.getElementById('opt-fancy-bg');
+        const optScale = document.getElementById('opt-scale');
+        const optScaleVal = document.getElementById('opt-scale-val');
+        const optScaleReset = document.getElementById('opt-scale-reset');
+        
+        const resizer = document.getElementById('app-resizer');
+        const appWin = document.getElementById('app-window');
+        
+        // Load initial settings
+        const savedScale = parseFloat(localStorage.getItem('pc2_scale') || '1.0');
+        const savedFancyBg = localStorage.getItem('pc2_fancy_bg') !== 'false';
+        
+        optScale.value = savedScale;
+        optFancyBg.checked = savedFancyBg;
+        
+        if (savedFancyBg) document.body.classList.add('fancy-bg');
+        
+        optFancyBg.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            localStorage.setItem('pc2_fancy_bg', isChecked);
+            if (isChecked) document.body.classList.add('fancy-bg');
+            else document.body.classList.remove('fancy-bg');
+        });
+        
+        const applyScale = (scale) => {
+            optScaleVal.textContent = Math.round(scale * 100) + '%';
+            appWin.style.transform = `scale(${scale})`;
+            resizer.style.width = (620 * scale) + 'px';
+            resizer.style.height = (appWin.offsetHeight * scale) + 'px';
+        };
+        
+        optScale.addEventListener('input', (e) => {
+            const scale = parseFloat(e.target.value);
+            localStorage.setItem('pc2_scale', scale);
+            applyScale(scale);
+        });
+        
+        optScaleReset.addEventListener('click', () => {
+            optScale.value = '1.0';
+            localStorage.setItem('pc2_scale', '1.0');
+            applyScale(1.0);
+        });
+
+        // Update height automatically if the content height changes (like switching tabs)
+        let lastH = 0;
+        const ro = new ResizeObserver(() => {
+            const currentH = appWin.offsetHeight;
+            if (currentH !== lastH) {
+                lastH = currentH;
+                applyScale(parseFloat(optScale.value));
+            }
+        });
+        ro.observe(appWin);
+        
+        // Apply initial scale
+        applyScale(savedScale);
+
         // ── Countdown Timer ──
         if (isCountdown) {
             const timeLeftEl = document.querySelector('.time-left');
-            
+
             if (isBeforeContest) {
                 document.getElementById('submit-btn').disabled = true;
                 document.getElementById('problem-select').disabled = true;
                 document.getElementById('select-file-btn').disabled = true;
             }
-            
+
             function updateTime() {
                 if (countdownSeconds <= 0) {
                     timeLeftEl.textContent = isBeforeContest ? 'STARTED' : 'FINISHED';
@@ -614,9 +697,9 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
                 str += String(h).padStart(2, '0') + ':';
                 str += String(m).padStart(2, '0') + ':';
                 str += String(s).padStart(2, '0');
-                
+
                 timeLeftEl.textContent = isBeforeContest ? ('Starts in: ' + str) : ('Time Left: ' + str);
-                
+
                 setTimeout(updateTime, 1000);
             }
             updateTime();
