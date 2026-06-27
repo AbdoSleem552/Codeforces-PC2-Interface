@@ -1,6 +1,6 @@
 window.PC2 = window.PC2 || {};
 
-window.PC2.Main = (function() {
+window.PC2.Main = (function () {
     const State = window.PC2.State;
     const UI = window.PC2.UI;
     const API = window.PC2.API;
@@ -35,6 +35,16 @@ window.PC2.Main = (function() {
                 'Language: ' + (this.value ? this.options[this.selectedIndex].textContent : '—');
         });
 
+        document.getElementById('print-all-btn').addEventListener('click', () => {
+            const btn = document.getElementById('print-all-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span style="font-size: 13px; line-height: 1;">⌛</span> Wait...';
+            window.PC2.Print.exportAllToPDF().finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<span style="font-size: 13px; line-height: 1;">🖨️</span> Print Statement';
+            });
+        });
+
         document.getElementById('exit-btn').addEventListener('click', () => {
             if (confirm('Exit PC^2?')) history.back();
         });
@@ -59,38 +69,38 @@ window.PC2.Main = (function() {
         const optScale = document.getElementById('opt-scale');
         const optScaleVal = document.getElementById('opt-scale-val');
         const optScaleReset = document.getElementById('opt-scale-reset');
-        
+
         const resizer = document.getElementById('app-resizer');
         const appWin = document.getElementById('app-window');
-        
+
         const savedScale = parseFloat(localStorage.getItem('pc2_scale') || '1.0');
         const savedFancyBg = localStorage.getItem('pc2_fancy_bg') !== 'false';
-        
+
         optScale.value = savedScale;
         optFancyBg.checked = savedFancyBg;
-        
+
         if (savedFancyBg) document.body.classList.add('fancy-bg');
-        
+
         optFancyBg.addEventListener('change', (e) => {
             const isChecked = e.target.checked;
             localStorage.setItem('pc2_fancy_bg', isChecked);
             if (isChecked) document.body.classList.add('fancy-bg');
             else document.body.classList.remove('fancy-bg');
         });
-        
+
         const applyScale = (scale) => {
             optScaleVal.textContent = Math.round(scale * 100) + '%';
             appWin.style.transform = `scale(${scale})`;
             resizer.style.width = (620 * scale) + 'px';
             resizer.style.height = (appWin.offsetHeight * scale) + 'px';
         };
-        
+
         optScale.addEventListener('input', (e) => {
             const scale = parseFloat(e.target.value);
             localStorage.setItem('pc2_scale', scale);
             applyScale(scale);
         });
-        
+
         optScaleReset.addEventListener('click', () => {
             optScale.value = '1.0';
             localStorage.setItem('pc2_scale', '1.0');
@@ -106,7 +116,7 @@ window.PC2.Main = (function() {
             }
         });
         ro.observe(appWin);
-        
+
         applyScale(savedScale);
 
         if (State.isCountdown) {
@@ -218,7 +228,7 @@ window.PC2.Main = (function() {
         while (document.head.firstChild) document.head.removeChild(document.head.firstChild);
         const mc = document.createElement('meta'); mc.setAttribute('charset', 'UTF-8');
         document.head.appendChild(mc);
-        
+
         UI.injectStyles();
         UI.buildBody();
         wireEvents();

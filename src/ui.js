@@ -4,14 +4,17 @@ window.PC2.UI = (function() {
     const State = window.PC2.State;
 
     function injectStyles() {
+        if (document.querySelector('link.pc2-style')) return;
         const link = document.createElement('link');
+        link.className = 'pc2-style';
         link.rel = 'stylesheet';
         link.type = 'text/css';
-        link.href = chrome.runtime.getURL('pc2-styles.css');
+        const stylesURL = document.documentElement.getAttribute('data-pc2-styles-url') || '';
+        link.href = stylesURL;
         document.head.appendChild(link);
     }
 
-    function buildBody() {
+    function buildBody(container) {
         let opts = '<option value="">Select Problem</option>';
         if (State.isBeforeContest) {
             opts = '<option value="">Contest not started</option>';
@@ -21,8 +24,11 @@ window.PC2.UI = (function() {
             });
         }
 
-        document.body.className = '';
-        document.body.innerHTML = `
+        const target = container || document.body;
+        if (target === document.body) {
+            document.body.className = '';
+        }
+        target.innerHTML = `
         <div class="app-resizer" id="app-resizer">
           <div class="app-window" id="app-window">
             <div class="title-bar">
@@ -34,7 +40,12 @@ window.PC2.UI = (function() {
           <div class="window-body">
             <div class="app-header">
               <div class="time-left">${State.isCountdown ? '...' : 'FINISHED'}</div>
-              <button class="win-btn" id="exit-btn">Exit</button>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button class="win-btn" id="print-all-btn" style="font-weight: bold; display: flex; align-items: center; gap: 5px; padding: 4px 10px;" title="Export all problems to a single PDF">
+                  <span style="font-size: 13px; line-height: 1;">🖨️</span> Print Statement
+                </button>
+                <button class="win-btn" id="exit-btn" style="padding: 4px 12px;">Exit</button>
+              </div>
             </div>
             <div class="tabs">
               <div class="tab active" data-target="tab-submit">Submit Run</div>

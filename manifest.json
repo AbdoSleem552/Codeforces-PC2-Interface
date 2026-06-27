@@ -10,17 +10,35 @@
         "https://*.codeforces.com/*"
       ],
       "js": [
+        "src/inject-env.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*"
+      ],
+      "js": [
         "src/state.js",
         "src/ui.js",
         "src/api.js",
+        "src/print.js",
         "src/main.js"
-      ]
+      ],
+      "world": "MAIN",
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["pc2-styles.css"],
-      "matches": ["https://codeforces.com/*", "https://*.codeforces.com/*"]
+      "resources": [
+        "pc2-styles.css"
+      ],
+      "matches": [
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*"
+      ]
     }
   ]
 }

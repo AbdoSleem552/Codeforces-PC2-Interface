@@ -1,6 +1,6 @@
 window.PC2 = window.PC2 || {};
 
-window.PC2.State = (function() {
+window.PC2.State = (function () {
     const _path = window.location.pathname;
     const isContestPage = /^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_path);
 
