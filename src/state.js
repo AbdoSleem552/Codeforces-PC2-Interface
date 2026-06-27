@@ -26,7 +26,12 @@ window.PC2.State = (function () {
     const ftaa = window._ftaa || '';
     const bfaa = window._bfaa || '';
 
-    const countdownEl = document.querySelector('.countdown');
+    let countdownEl = null;
+    document.querySelectorAll('.countdown').forEach(el => {
+        if (el.textContent.includes(':')) {
+            countdownEl = el;
+        }
+    });
     let isCountdown = !!countdownEl;
     let countdownRedirect = isCountdown ? countdownEl.getAttribute('redirectUrl') : '';
     let countdownSeconds = 0;
