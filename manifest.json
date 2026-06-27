@@ -1,8 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Codeforces 2 PC^2",
+  "name": "Codeforces PC2 Interface",
   "version": "1.0",
   "description": "Replaces Codeforces contest pages with a PC^2-style interface.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": "popup/icon.png"
+  },
+  "icons": {
+    "128": "popup/icon.png"
+  },
   "content_scripts": [
     {
       "matches": [

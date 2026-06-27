@@ -303,6 +303,11 @@ window.PC2.Main = (function () {
     }
 
     function run() {
+        const enabled = document.documentElement.getAttribute('data-pc2-enabled');
+        if (enabled === 'false') {
+            return;
+        }
+
         window.addEventListener('beforeunload', e => { e.stopImmediatePropagation(); }, true);
         window.addEventListener('unload', e => { e.stopImmediatePropagation(); }, true);
 
