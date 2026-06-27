@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Codeforces 2 PC^2",
+  "version": "1.0",
+  "description": "Replaces Codeforces contest pages with a PC^2-style interface.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://codeforces.com/*",
+        "https://*.codeforces.com/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
+}
