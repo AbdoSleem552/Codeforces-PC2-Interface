@@ -59,8 +59,8 @@ window.PC2.Main = (function () {
                 clarsTbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
                 tr.classList.add('selected-row');
 
-                const clarId = parseInt(tr.dataset.id, 10);
-                const clar = (State.clarifications || []).find(c => c.id === clarId);
+                const clarId = tr.dataset.id;
+                const clar = (State.clarifications || []).find(c => String(c.id) === String(clarId));
                 if (clar) {
                     document.getElementById('clar-question-text').value = clar.question;
                     document.getElementById('clar-answer-text').value = clar.answer || '—';

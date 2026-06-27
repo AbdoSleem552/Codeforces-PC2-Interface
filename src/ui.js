@@ -16,11 +16,14 @@ window.PC2.UI = (function() {
 
     function buildBody(container) {
         let opts = '<option value="">Select Problem</option>';
+        let clarOpts = '<option value="General">General</option>';
         if (State.isBeforeContest) {
             opts = '<option value="">Contest not started</option>';
+            clarOpts = '<option value="General">General (Contest not started)</option>';
         } else {
             State.problems.forEach(({ letter, name }) => {
                 opts += `<option value="${letter}">${letter} - ${name}</option>`;
+                clarOpts += `<option value="${letter}">${letter} - ${name}</option>`;
             });
         }
 
@@ -138,7 +141,7 @@ window.PC2.UI = (function() {
             <div id="tab-request-clar" class="tab-content" style="padding: 15px 20px;">
               <div class="form-group">
                 <span class="form-label">Problem</span>
-                <select id="request-clar-problem-select">${opts}</select>
+                <select id="request-clar-problem-select">${clarOpts}</select>
               </div>
               <fieldset style="border: 1px solid #999; border-radius: 3px; padding: 6px 10px; margin-bottom: 12px; margin-top: 10px; background: transparent;">
                 <legend style="font-size: 11px; font-weight: bold; padding: 0 4px; color: #333;">Clarification Question</legend>

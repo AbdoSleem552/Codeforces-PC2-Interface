@@ -136,16 +136,29 @@ window.PC2.API = (function() {
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading clarifications...</td></tr>';
         try {
-            const html = await fetch(`https://codeforces.com${State.contestPath}/questions`, { credentials: 'include' }).then(r => r.text());
-            const doc = new DOMParser().parseFromString(html, 'text/html');
+            // First, try fetching the main contest dashboard page, which contains the questions table.
+            let html = await fetch(`https://codeforces.com${State.contestPath}`, { credentials: 'include' }).then(r => r.text());
+            let doc = new DOMParser().parseFromString(html, 'text/html');
+            let table = doc.querySelector('table.problem-questions-table') || doc.querySelector('table.datatable') || doc.querySelector('table');
             
-            const table = doc.querySelector('table.datatable') || doc.querySelector('table');
+            // Fallback to State.contestPath + '/questions' if table is not found
+            if (!table || !table.querySelector('tr.problem-question, tr:not(:first-child)')) {
+                const altHtml = await fetch(`https://codeforces.com${State.contestPath}/questions`, { credentials: 'include' }).then(r => r.text());
+                const altDoc = new DOMParser().parseFromString(altHtml, 'text/html');
+                const altTable = altDoc.querySelector('table.problem-questions-table') || altDoc.querySelector('table.datatable') || altDoc.querySelector('table');
+                if (altTable) {
+                    table = altTable;
+                    html = altHtml;
+                    doc = altDoc;
+                }
+            }
+
             if (!table) {
                 tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No clarifications found</td></tr>';
                 return;
             }
             
-            const rows = table.querySelectorAll('tr:not(:first-child)');
+            const rows = table.querySelectorAll('tr.problem-question, tr:not(:first-child)');
             tbody.innerHTML = '';
             let count = 0;
             const clarsList = [];
@@ -154,18 +167,88 @@ window.PC2.API = (function() {
                 const cells = row.querySelectorAll('td');
                 if (cells.length < 3) return;
                 
-                // Codeforces questions columns:
-                // Column 0: When
-                // Column 1: Problem (e.g. "A - Problem Title" or "General")
-                // Column 2: Question text
-                // Column 3: Answer text (if present)
-                const timeText = cells[0].textContent.trim();
-                const probText = cells[1].textContent.trim();
-                const problemLetter = probText.includes('-') ? probText.split('-')[0].trim() : probText;
-                const questionText = cells[2].textContent.trim();
-                const answerText = cells[3] ? cells[3].textContent.trim() : '';
+                let timeText = '';
+                let problemLetter = 'General';
+                let questionText = '';
+                let answerText = '';
+                let clarId = idx + 1;
+
+                if (cells.length === 3) {
+                    // 3-column layout: Time | Question | Answer
+                    timeText = cells[0].textContent.trim();
+
+                    const questionDiv = cells[1].querySelector('.question-content') || cells[1];
+                    if (questionDiv) {
+                        // Replace <br> tags with a separator so we can split
+                        const clone = questionDiv.cloneNode(true);
+                        clone.querySelectorAll('br').forEach(br => br.replaceWith('*****'));
+                        const text = clone.textContent.trim();
+                        let headerText = '';
+                        let bodyText = '';
+
+                        if (text.includes('*****')) {
+                            const parts = text.split('*****');
+                            headerText = parts[0].trim();
+                            bodyText = parts.slice(1).join(' ').replace(/\s+/g, ' ').trim();
+                        } else {
+                            const bEl = questionDiv.querySelector('b');
+                            if (bEl) {
+                                headerText = bEl.textContent.trim();
+                                const temp = questionDiv.cloneNode(true);
+                                const tempB = temp.querySelector('b');
+                                if (tempB) tempB.remove();
+                                bodyText = temp.textContent.trim();
+                            } else {
+                                bodyText = text;
+                            }
+                        }
+
+                        // Extract problem letter from headerText or bodyText
+                        let matchedLetter = null;
+                        const headerMatch = headerText.match(/^(?:Problem\s+)?([A-Z0-9]+)\b/i);
+                        if (headerMatch) {
+                            matchedLetter = headerMatch[1].toUpperCase();
+                        } else {
+                            const bodyMatch = bodyText.match(/^(?:Problem\s+)?([A-Z0-9]+)\b/i);
+                            if (bodyMatch) {
+                                matchedLetter = bodyMatch[1].toUpperCase();
+                            }
+                        }
+
+                        if (matchedLetter && matchedLetter !== 'GENERAL') {
+                            problemLetter = matchedLetter;
+                        }
+
+                        questionText = bodyText || headerText;
+                    }
+
+                    const responseDiv = cells[2].querySelector('.question-response') || cells[2];
+                    if (responseDiv) {
+                        // Extract actual answer, cleaning up header and separator if present
+                        const clone = responseDiv.cloneNode(true);
+                        clone.querySelectorAll('br').forEach(br => br.replaceWith('*****'));
+                        const rawAnswer = clone.textContent.trim();
+                        if (rawAnswer.includes('*****')) {
+                            const parts = rawAnswer.split('*****');
+                            answerText = parts.slice(1).join(' ').replace(/\s+/g, ' ').trim();
+                        } else {
+                            answerText = responseDiv.textContent.trim();
+                        }
+
+                        const qIdAttr = responseDiv.getAttribute('data-question-id');
+                        if (qIdAttr) {
+                            clarId = qIdAttr;
+                        }
+                    }
+                } else {
+                    // 4+ column layout (old fallback)
+                    timeText = cells[0].textContent.trim();
+                    const probText = cells[1].textContent.trim();
+                    problemLetter = probText.includes('-') ? probText.split('-')[0].trim() : probText;
+                    questionText = cells[2].textContent.trim();
+                    answerText = cells[3] ? cells[3].textContent.trim() : '';
+                }
                 
-                const clarId = idx + 1;
                 const status = answerText ? 'Answered' : 'Pending';
 
                 clarsList.push({
@@ -175,7 +258,7 @@ window.PC2.API = (function() {
                     time: timeText,
                     status: status,
                     problem: problemLetter,
-                    question: questionText,
+                    question: questionText || 'Announcement',
                     answer: answerText
                 });
                 count++;
@@ -209,29 +292,66 @@ window.PC2.API = (function() {
     }
 
     async function submitClarification(problemLetter, text) {
-        if (!problemLetter) throw new Error('Please select a problem.');
         if (!text || !text.trim()) throw new Error('Please enter your question.');
         if (!State.csrfToken) throw new Error('CSRF token not found.');
 
-        const fd = new FormData();
-        fd.append('csrf_token', State.csrfToken);
-        fd.append('action', 'askQuestion');
-        fd.append('submittedProblemIndex', problemLetter);
-        fd.append('text', text);
+        let postUrl = '/data/newProblemQuestion';
+        const groupMatch = State.contestPath.match(/^\/group\/([a-zA-Z0-9_-]+)/);
+        if (groupMatch) {
+            postUrl = `/group/${groupMatch[1]}/data/newProblemQuestion`;
+        }
 
-        // Fetch ftaa and bfaa from document context if they are empty
-        const ftaaVal = State.ftaa || window._ftaa || '';
-        const bfaaVal = State.bfaa || window._bfaa || '';
-        fd.append('ftaa', ftaaVal);
-        fd.append('bfaa', bfaaVal);
+        const params = new URLSearchParams();
+        params.append('csrf_token', State.csrfToken);
+        params.append('contestId', State.contestId);
+        params.append('submittedProblemIndex', problemLetter === 'General' ? '' : problemLetter);
+        params.append('question', text);
+        if (State.ftaa) params.append('ftaa', State.ftaa);
+        if (State.bfaa) params.append('bfaa', State.bfaa);
 
-        const resp = await fetch(
-            `https://codeforces.com${State.contestPath}/questions`,
-            { method: 'POST', body: fd, credentials: 'include' }
-        );
+        const resp = await fetch(`https://codeforces.com${postUrl}`, {
+            method: 'POST',
+            body: params,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'X-Csrf-Token': State.csrfToken
+            },
+            credentials: 'include'
+        });
 
         if (!resp.ok) {
             throw new Error('Server returned status ' + resp.status);
+        }
+
+        let data;
+        try {
+            data = await resp.json();
+        } catch(e) {
+            // Assume success if status is 200 but response is not JSON
+            return;
+        }
+
+        let hasError = false;
+        let errorMessage = '';
+
+        if (data) {
+            if (data.success === "false" || data.success === false) {
+                hasError = true;
+                errorMessage = data.message || 'Failed to submit question.';
+            } else {
+                // Check for keys starting with error__
+                for (const key of Object.keys(data)) {
+                    if (key.startsWith('error__') && data[key]) {
+                        hasError = true;
+                        errorMessage = data[key];
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (hasError) {
+            throw new Error(errorMessage || 'Failed to submit question.');
         }
     }
 
