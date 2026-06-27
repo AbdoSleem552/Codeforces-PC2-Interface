@@ -370,11 +370,75 @@ window.PC2.UI = (function() {
         makeDraggable(dialog, header);
     }
 
+    function showConfirmDialog({ problem, language, filename, onConfirm, onCancel }) {
+        document.getElementById('pc2-confirm-dialog')?.remove();
+        document.getElementById('pc2-confirm-overlay')?.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'pc2-confirm-overlay';
+        overlay.className = 'pc2-overlay';
+        document.body.appendChild(overlay);
+
+        const dialog = document.createElement('div');
+        dialog.id = 'pc2-confirm-dialog';
+        dialog.className = 'pc2-dialog';
+        dialog.style.left = ((window.innerWidth - 330) / 2) + 'px';
+        dialog.style.top = ((window.innerHeight - 250) / 2) + 'px';
+
+        const header = document.createElement('div');
+        header.className = 'pc2-header';
+        header.innerHTML = '<div class="pc2-header-title"><span>&#9749;</span> Confirm Submit</div>';
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'pc2-close';
+        closeBtn.textContent = '×';
+        header.appendChild(closeBtn);
+
+        const body = document.createElement('div');
+        body.className = 'pc2-body';
+        body.innerHTML = `
+            <div class="pc2-header-text"><div class="info-icon">?</div>Submit Solution?</div>
+            <div class="pc2-row" style="font-size:13px; margin-bottom:10px;">Are you sure you want to submit?</div>
+            <div class="pc2-row" style="font-size:12px; margin-bottom:6px;">Problem: <span class="val-blue">${problem}</span></div>
+            <div class="pc2-row" style="font-size:12px; margin-bottom:6px;">Language: <span class="val-blue">${language}</span></div>
+            <div class="pc2-row" style="font-size:12px; margin-bottom:6px;">File: <span class="val-blue">${filename}</span></div>`;
+
+        const footer = document.createElement('div');
+        footer.className = 'pc2-footer';
+        footer.style.gap = '15px';
+
+        const yesBtn = document.createElement('button');
+        yesBtn.className = 'pc2-ok-btn';
+        yesBtn.id = 'confirm-yes-btn';
+        yesBtn.style.cssText = 'background: #2e7d32; color: #fff; border: 1px solid #1b5e20; box-shadow: inset 1px 1px 0 #4caf50, inset -1px -1px 0 #0d3c0e; font-weight: bold; padding: 4px 22px;';
+        yesBtn.textContent = 'Yes';
+
+        const noBtn = document.createElement('button');
+        noBtn.className = 'pc2-ok-btn';
+        noBtn.id = 'confirm-no-btn';
+        noBtn.textContent = 'No';
+
+        footer.appendChild(yesBtn);
+        footer.appendChild(noBtn);
+
+        dialog.appendChild(header);
+        dialog.appendChild(body);
+        dialog.appendChild(footer);
+        document.body.appendChild(dialog);
+
+        function closeDialog() { dialog.remove(); overlay.remove(); }
+        closeBtn.addEventListener('click', () => { closeDialog(); if (onCancel) onCancel(); });
+        noBtn.addEventListener('click', () => { closeDialog(); if (onCancel) onCancel(); });
+        yesBtn.addEventListener('click', () => { closeDialog(); if (onConfirm) onConfirm(); });
+        overlay.addEventListener('click', () => { closeDialog(); if (onCancel) onCancel(); });
+        makeDraggable(dialog, header);
+    }
+
     return {
         injectStyles,
         buildBody,
         showToast,
         showDialog,
-        showVerdictDialog
+        showVerdictDialog,
+        showConfirmDialog
     };
 })();

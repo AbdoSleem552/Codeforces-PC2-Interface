@@ -226,7 +226,7 @@ window.PC2.Main = (function () {
             updateTime();
         }
 
-        document.getElementById('submit-btn').addEventListener('click', async () => {
+        document.getElementById('submit-btn').addEventListener('click', () => {
             const problemLetter = document.getElementById('problem-select').value;
             const programTypeId = document.getElementById('language-select').value;
             const langSel = document.getElementById('language-select');
@@ -239,57 +239,66 @@ window.PC2.Main = (function () {
             if (!State.contestPath) { UI.showToast('Contest path not found.'); return; }
             if (!State.csrfToken) { UI.showToast('CSRF token not found — try reloading.'); return; }
 
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.textContent = 'Submitting...';
+            const filename = fileInput.files[0].name;
 
-            try {
-                const fd = new FormData();
-                fd.append('csrf_token', State.csrfToken);
-                fd.append('ftaa', State.ftaa);
-                fd.append('bfaa', State.bfaa);
-                fd.append('turnstileToken', '');
-                fd.append('action', 'submitSolutionFormSubmitted');
-                fd.append('submittedProblemIndex', problemLetter);
-                fd.append('programTypeId', programTypeId);
-                fd.append('source', '');
-                fd.append('sourceFile', fileInput.files[0]);
+            UI.showConfirmDialog({
+                problem: problemLetter,
+                language: langText,
+                filename: filename,
+                onConfirm: async () => {
+                    const btn = document.getElementById('submit-btn');
+                    btn.disabled = true;
+                    btn.textContent = 'Submitting...';
 
-                const adcd1e = 'caf4f' + Math.random().toString(36).substr(2, 9);
+                    try {
+                        const fd = new FormData();
+                        fd.append('csrf_token', State.csrfToken);
+                        fd.append('ftaa', State.ftaa);
+                        fd.append('bfaa', State.bfaa);
+                        fd.append('turnstileToken', '');
+                        fd.append('action', 'submitSolutionFormSubmitted');
+                        fd.append('submittedProblemIndex', problemLetter);
+                        fd.append('programTypeId', programTypeId);
+                        fd.append('source', '');
+                        fd.append('sourceFile', fileInput.files[0]);
 
-                const submitResp = await fetch(
-                    `https://codeforces.com${State.contestPath}/problem/${problemLetter}` +
-                    `?csrf_token=${State.csrfToken}&adcd1e=${adcd1e}`,
-                    { method: 'POST', body: fd, credentials: 'include', redirect: 'manual' }
-                );
+                        const adcd1e = 'caf4f' + Math.random().toString(36).substr(2, 9);
 
-                if (submitResp.type !== 'opaqueredirect' && !submitResp.ok && submitResp.status !== 0) {
-                    throw new Error('Server returned status ' + submitResp.status);
+                        const submitResp = await fetch(
+                            `https://codeforces.com${State.contestPath}/problem/${problemLetter}` +
+                            `?csrf_token=${State.csrfToken}&adcd1e=${adcd1e}`,
+                            { method: 'POST', body: fd, credentials: 'include', redirect: 'manual' }
+                        );
+
+                        if (submitResp.type !== 'opaqueredirect' && !submitResp.ok && submitResp.status !== 0) {
+                            throw new Error('Server returned status ' + submitResp.status);
+                        }
+
+                        await new Promise(r => setTimeout(r, 900));
+
+                        let runId = '—';
+                        try {
+                            const myHtml = await fetch(
+                                `https://codeforces.com${State.contestPath}/my`,
+                                { credentials: 'include' }
+                            ).then(r => r.text());
+
+                            const doc = new DOMParser().parseFromString(myHtml, 'text/html');
+                            const cell = doc.querySelector('table[class*="status"] tr:not(:first-child) td:first-child');
+                            if (cell) runId = cell.textContent.trim();
+                        } catch (_) {}
+
+                        UI.showDialog({ runId, problem: problemLetter, language: langText });
+                        API.pollVerdict(runId, problemLetter, langText);
+
+                    } catch (err) {
+                        UI.showToast('Submission error: ' + (err.message || 'Unknown'));
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = 'Submit';
+                    }
                 }
-
-                await new Promise(r => setTimeout(r, 900));
-
-                let runId = '—';
-                try {
-                    const myHtml = await fetch(
-                        `https://codeforces.com${State.contestPath}/my`,
-                        { credentials: 'include' }
-                    ).then(r => r.text());
-
-                    const doc = new DOMParser().parseFromString(myHtml, 'text/html');
-                    const cell = doc.querySelector('table[class*="status"] tr:not(:first-child) td:first-child');
-                    if (cell) runId = cell.textContent.trim();
-                } catch (_) {}
-
-                UI.showDialog({ runId, problem: problemLetter, language: langText });
-                API.pollVerdict(runId, problemLetter, langText);
-
-            } catch (err) {
-                UI.showToast('Submission error: ' + (err.message || 'Unknown'));
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Submit';
-            }
+            });
         });
     }
 
