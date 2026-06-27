@@ -293,8 +293,12 @@ window.PC2.Print = (function () {
             /* ── KaTeX display blocks ── */
             .katex-display { margin: 1rem 0; overflow-x: auto; }
 
+            @page {
+                margin: 0;
+            }
+
             @media print {
-                body { padding: 0; }
+                body { padding: 15mm; }
                 * {
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
