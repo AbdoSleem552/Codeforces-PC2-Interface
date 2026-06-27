@@ -195,11 +195,6 @@ window.PC2.Print = (function () {
         // Open a self-contained print window.
         // Because math is already static KaTeX HTML, all we need is the KaTeX CSS.
         // No JavaScript math engine is needed — the window can print immediately on load.
-        const win = window.open('', '_blank', 'width=960,height=720');
-        if (!win) {
-            UI.showToast('Popup blocked — allow popups for Codeforces and try again.');
-            return;
-        }
 
         const css = `
             *, *::before, *::after { box-sizing: border-box; }
@@ -307,7 +302,7 @@ window.PC2.Print = (function () {
             }
         `;
 
-        win.document.write(`<!DOCTYPE html>
+        const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -325,8 +320,19 @@ window.addEventListener('load', function () {
 });
 <\/script>
 </body>
-</html>`);
-        win.document.close();
+</html>`;
+
+        const blob = new Blob([html], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        const win = window.open(blobUrl, '_blank', 'width=960,height=720');
+        
+        if (!win) {
+            UI.showToast('Popup blocked — allow popups for Codeforces and try again.');
+            return;
+        }
+
+        // Cleanup the blob URL after a short delay so memory is freed
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
     }
 
     return { exportAllToPDF };
