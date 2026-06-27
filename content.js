@@ -349,8 +349,9 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
         const dialog = document.createElement('div');
         dialog.id = 'pc2-verdict-dialog';
         dialog.className = 'pc2-dialog';
+        dialog.style.width = '420px';
         // Offset slightly so it doesn't perfectly overlap the submission popup
-        dialog.style.left = (Math.max(20, (window.innerWidth - 330) / 2 + 30)) + 'px';
+        dialog.style.left = (Math.max(20, (window.innerWidth - 420) / 2 + 30)) + 'px';
         dialog.style.top = (Math.max(20, (window.innerHeight - 300) / 2 + 30)) + 'px';
 
         const header = document.createElement('div');
@@ -368,8 +369,8 @@ if (/^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_
             <div class="pc2-row">Problem: <span class="val-blue">${problem}</span></div>
             <div class="pc2-row">Language: <span class="val-blue">${language}</span></div>
             <div class="pc2-row">Run Id: <span class="val-blue">${runId}</span></div>
-            <div class="pc2-row" style="margin-top:30px;">Judge's Response:
-              <span style="color:${verdictColor}; font-size:18px;"> ${verdictText}</span>
+            <div class="pc2-row" style="margin-top:30px;">Judge's Response: 
+              <span style="color:${verdictColor}; font-size:16px;">${verdictText}</span>
             </div>`;
 
         const footer = document.createElement('div');
