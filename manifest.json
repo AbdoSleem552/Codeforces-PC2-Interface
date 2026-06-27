@@ -9,7 +9,18 @@
         "https://codeforces.com/*",
         "https://*.codeforces.com/*"
       ],
-      "js": ["content.js"]
+      "js": [
+        "src/state.js",
+        "src/ui.js",
+        "src/api.js",
+        "src/main.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["pc2-styles.css"],
+      "matches": ["https://codeforces.com/*", "https://*.codeforces.com/*"]
     }
   ]
 }
