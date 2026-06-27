@@ -50,8 +50,8 @@ window.PC2.UI = (function() {
             <div class="tabs">
               <div class="tab active" data-target="tab-submit">Submit Run</div>
               <div class="tab" data-target="tab-runs">View Runs</div>
-              <div class="tab">Request Clarification</div>
-              <div class="tab">View Clarifications</div>
+              <div class="tab" data-target="tab-request-clar">Request Clarification</div>
+              <div class="tab" data-target="tab-view-clars">View Clarifications</div>
               <div class="tab" data-target="tab-options">Options</div>
               <div class="tab" data-target="tab-about">About</div>
             </div>
@@ -133,6 +133,58 @@ window.PC2.UI = (function() {
                <div style="text-align: center; margin-top: 10px; padding-bottom: 5px;">
                  <button class="win-btn">Filter</button>
                </div>
+            </div>
+
+            <div id="tab-request-clar" class="tab-content" style="padding: 15px 20px;">
+              <div class="form-group">
+                <span class="form-label">Problem</span>
+                <select id="request-clar-problem-select">${opts}</select>
+              </div>
+              <fieldset style="border: 1px solid #999; border-radius: 3px; padding: 6px 10px; margin-bottom: 12px; margin-top: 10px; background: transparent;">
+                <legend style="font-size: 11px; font-weight: bold; padding: 0 4px; color: #333;">Clarification Question</legend>
+                <textarea id="request-clar-text" style="width: 100%; height: 90px; background: #fff; border: 1px inset #999; resize: none; font-size: 12px; font-family: 'Segoe UI', Tahoma, sans-serif; padding: 6px; outline: none;"></textarea>
+              </fieldset>
+              <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button class="win-btn" id="submit-clar-btn">Submit</button>
+              </div>
+            </div>
+
+            <div id="tab-view-clars" class="tab-content" style="padding: 10px 14px;">
+              <div class="pc2-table-container" style="height: 150px; margin-bottom: 10px;">
+                <table class="pc2-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 12%;">Site ▴</th>
+                      <th style="width: 12%;">Team</th>
+                      <th style="width: 12%;">Clar Id</th>
+                      <th style="width: 10%;">Time</th>
+                      <th style="width: 12%;">Status</th>
+                      <th style="width: 12%;">Problem</th>
+                      <th style="width: 15%;">Question</th>
+                      <th style="width: 15%;">Answer</th>
+                    </tr>
+                  </thead>
+                  <tbody id="clars-tbody">
+                    <tr><td colspan="8" style="text-align:center;">Loading clarifications...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <fieldset style="border: 1px solid #999; border-radius: 3px; padding: 4px 8px; margin-bottom: 6px; background: transparent;">
+                <legend style="font-size: 11px; font-weight: bold; padding: 0 4px; color: #333;">Clarification</legend>
+                <textarea id="clar-question-text" readonly style="width: 100%; height: 40px; background: #e4e7ec; border: 1px inset #999; resize: none; font-size: 11px; font-family: 'Segoe UI', Tahoma, sans-serif; padding: 4px; outline: none;"></textarea>
+              </fieldset>
+
+              <div style="border-top: 1px dotted #999; margin: 6px 0;"></div>
+
+              <fieldset style="border: 1px solid #999; border-radius: 3px; padding: 4px 8px; margin-bottom: 8px; background: transparent;">
+                <legend style="font-size: 11px; font-weight: bold; padding: 0 4px; color: #333;">Answer</legend>
+                <textarea id="clar-answer-text" readonly style="width: 100%; height: 40px; background: #e4e7ec; border: 1px inset #999; resize: none; font-size: 11px; font-family: 'Segoe UI', Tahoma, sans-serif; padding: 4px; outline: none;"></textarea>
+              </fieldset>
+
+              <div style="text-align: center; margin-top: 6px; padding-bottom: 4px;">
+                <button class="win-btn" id="clars-filter-btn">Filter</button>
+              </div>
             </div>
 
             <div id="tab-options" class="tab-content" style="padding: 25px 30px;">

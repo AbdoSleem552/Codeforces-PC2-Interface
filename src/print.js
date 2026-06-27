@@ -175,7 +175,7 @@ window.PC2.Print = (function () {
         }
 
         const links = State.problems.map(
-            p => `https://codeforces.com/contest/${State.contestId}/problem/${p.letter}`
+            p => `https://codeforces.com${State.contestPath}/problem/${p.letter}`
         );
         const rawHTMLs = await Promise.all(links.map(url => fetchProblem(url)));
 

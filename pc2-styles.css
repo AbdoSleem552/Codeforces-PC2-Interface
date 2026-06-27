@@ -61,3 +61,4 @@ select:focus { outline: 1px solid #2b4478; }
 .pc2-table th { background: #f0f0f0; font-weight: normal; position: sticky; top: 0; box-shadow: 0 1px 0 #999; }
 .pc2-table tr:nth-child(even) { background: #d8dce3; }
 .pc2-table tr:hover { background: #cde1f5; }
+.pc2-table tr.selected-row { background: #b0cbe8 !important; color: #000; }

@@ -2,11 +2,26 @@ window.PC2 = window.PC2 || {};
 
 window.PC2.State = (function () {
     const _path = window.location.pathname;
-    const isContestPage = /^\/contest\/\d+\/?$/.test(_path) || /^\/contest\/\d+\/countdown\/?$/.test(_path);
+    
+    const contestRegex = /^\/(contest|gym)\/(\d+)(\/countdown)?\/?$/;
+    const groupContestRegex = /^\/group\/([a-zA-Z0-9_-]+)\/contest\/(\d+)(\/countdown)?\/?$/;
+    const isContestPage = contestRegex.test(_path) || groupContestRegex.test(_path);
 
     if (!isContestPage) return { isContestPage: false };
 
-    const contestId = (_path.match(/\/contest\/(\d+)/) || [])[1] || '';
+    let contestPath = '';
+    let contestId = '';
+    const contestMatch = _path.match(/^\/(contest|gym)\/(\d+)/);
+    const groupContestMatch = _path.match(/^\/group\/([a-zA-Z0-9_-]+)\/contest\/(\d+)/);
+    
+    if (contestMatch) {
+        contestPath = contestMatch[0];
+        contestId = contestMatch[2];
+    } else if (groupContestMatch) {
+        contestPath = groupContestMatch[0];
+        contestId = groupContestMatch[2];
+    }
+
     const csrfToken = (document.querySelector('meta[name="X-Csrf-Token"]') || {}).content || '';
     const ftaa = window._ftaa || '';
     const bfaa = window._bfaa || '';
@@ -53,6 +68,7 @@ window.PC2.State = (function () {
     return {
         isContestPage,
         contestId,
+        contestPath,
         csrfToken,
         ftaa,
         bfaa,

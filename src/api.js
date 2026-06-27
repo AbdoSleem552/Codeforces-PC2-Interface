@@ -37,7 +37,7 @@ window.PC2.API = (function() {
 
             try {
                 const html = await fetch(
-                    `https://codeforces.com/contest/${State.contestId}/my`,
+                    `https://codeforces.com${State.contestPath}/my`,
                     { credentials: 'include', redirect: 'follow' }
                 ).then(r => r.text());
 
@@ -76,7 +76,7 @@ window.PC2.API = (function() {
         const tbody = document.getElementById('runs-tbody');
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading runs...</td></tr>';
         try {
-            const html = await fetch(`https://codeforces.com/contest/${State.contestId}/my`, { credentials: 'include' }).then(r => r.text());
+            const html = await fetch(`https://codeforces.com${State.contestPath}/my`, { credentials: 'include' }).then(r => r.text());
             const doc = new DOMParser().parseFromString(html, 'text/html');
             const rows = doc.querySelectorAll('table.status-frame-datatable tr[data-submission-id]');
 
@@ -131,8 +131,114 @@ window.PC2.API = (function() {
         }
     }
 
+    async function fetchClarifications() {
+        const tbody = document.getElementById('clars-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading clarifications...</td></tr>';
+        try {
+            const html = await fetch(`https://codeforces.com${State.contestPath}/questions`, { credentials: 'include' }).then(r => r.text());
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            
+            const table = doc.querySelector('table.datatable') || doc.querySelector('table');
+            if (!table) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No clarifications found</td></tr>';
+                return;
+            }
+            
+            const rows = table.querySelectorAll('tr:not(:first-child)');
+            tbody.innerHTML = '';
+            let count = 0;
+            const clarsList = [];
+
+            rows.forEach((row, idx) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 3) return;
+                
+                // Codeforces questions columns:
+                // Column 0: When
+                // Column 1: Problem (e.g. "A - Problem Title" or "General")
+                // Column 2: Question text
+                // Column 3: Answer text (if present)
+                const timeText = cells[0].textContent.trim();
+                const probText = cells[1].textContent.trim();
+                const problemLetter = probText.includes('-') ? probText.split('-')[0].trim() : probText;
+                const questionText = cells[2].textContent.trim();
+                const answerText = cells[3] ? cells[3].textContent.trim() : '';
+                
+                const clarId = idx + 1;
+                const status = answerText ? 'Answered' : 'Pending';
+
+                clarsList.push({
+                    site: 'Site 1',
+                    team: 'Team 1',
+                    id: clarId,
+                    time: timeText,
+                    status: status,
+                    problem: problemLetter,
+                    question: questionText,
+                    answer: answerText
+                });
+                count++;
+            });
+
+            State.clarifications = clarsList;
+
+            clarsList.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = c.id;
+                tr.style.cursor = 'pointer';
+                tr.innerHTML = `
+                    <td>${c.site}</td>
+                    <td>${c.team}</td>
+                    <td>${c.id}</td>
+                    <td>${c.time}</td>
+                    <td>${c.status}</td>
+                    <td>${c.problem}</td>
+                    <td style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.question}</td>
+                    <td style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.answer || '—'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (count === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No clarifications found</td></tr>';
+            }
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Failed to load clarifications</td></tr>';
+        }
+    }
+
+    async function submitClarification(problemLetter, text) {
+        if (!problemLetter) throw new Error('Please select a problem.');
+        if (!text || !text.trim()) throw new Error('Please enter your question.');
+        if (!State.csrfToken) throw new Error('CSRF token not found.');
+
+        const fd = new FormData();
+        fd.append('csrf_token', State.csrfToken);
+        fd.append('action', 'askQuestion');
+        fd.append('submittedProblemIndex', problemLetter);
+        fd.append('text', text);
+
+        // Fetch ftaa and bfaa from document context if they are empty
+        const ftaaVal = State.ftaa || window._ftaa || '';
+        const bfaaVal = State.bfaa || window._bfaa || '';
+        fd.append('ftaa', ftaaVal);
+        fd.append('bfaa', bfaaVal);
+
+        const resp = await fetch(
+            `https://codeforces.com${State.contestPath}/questions`,
+            { method: 'POST', body: fd, credentials: 'include' }
+        );
+
+        if (!resp.ok) {
+            throw new Error('Server returned status ' + resp.status);
+        }
+    }
+
     return {
         pollVerdict,
-        fetchRuns
+        fetchRuns,
+        fetchClarifications,
+        submitClarification
     };
 })();

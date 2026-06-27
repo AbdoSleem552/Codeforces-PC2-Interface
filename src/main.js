@@ -49,6 +49,73 @@ window.PC2.Main = (function () {
             if (confirm('Exit PC^2?')) history.back();
         });
 
+        // Clarifications wiring
+        const clarsTbody = document.getElementById('clars-tbody');
+        if (clarsTbody) {
+            clarsTbody.addEventListener('click', (e) => {
+                const tr = e.target.closest('tr');
+                if (!tr || !tr.dataset.id) return;
+                
+                clarsTbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
+                tr.classList.add('selected-row');
+
+                const clarId = parseInt(tr.dataset.id, 10);
+                const clar = (State.clarifications || []).find(c => c.id === clarId);
+                if (clar) {
+                    document.getElementById('clar-question-text').value = clar.question;
+                    document.getElementById('clar-answer-text').value = clar.answer || '—';
+                }
+            });
+        }
+
+        const submitClarBtn = document.getElementById('submit-clar-btn');
+        if (submitClarBtn) {
+            submitClarBtn.addEventListener('click', () => {
+                const probSelect = document.getElementById('request-clar-problem-select');
+                const textEl = document.getElementById('request-clar-text');
+                const problemLetter = probSelect ? probSelect.value : '';
+                const text = textEl ? textEl.value : '';
+
+                if (!problemLetter) {
+                    UI.showToast('Please select a problem.');
+                    return;
+                }
+                if (!text.trim()) {
+                    UI.showToast('Please enter your question.');
+                    return;
+                }
+
+                submitClarBtn.disabled = true;
+                const originalText = submitClarBtn.textContent;
+                submitClarBtn.textContent = 'Submitting...';
+
+                API.submitClarification(problemLetter, text)
+                    .then(() => {
+                        UI.showToast('Clarification requested successfully!', true);
+                        textEl.value = '';
+                        const viewClarsTab = document.querySelector('[data-target="tab-view-clars"]');
+                        if (viewClarsTab) viewClarsTab.click();
+                    })
+                    .catch(err => {
+                        UI.showToast(err.message || 'Failed to submit clarification.');
+                    })
+                    .finally(() => {
+                        submitClarBtn.disabled = false;
+                        submitClarBtn.textContent = originalText;
+                    });
+            });
+        }
+
+        const clarsFilterBtn = document.getElementById('clars-filter-btn');
+        if (clarsFilterBtn) {
+            clarsFilterBtn.addEventListener('click', () => {
+                API.fetchClarifications();
+                document.getElementById('clar-question-text').value = '';
+                document.getElementById('clar-answer-text').value = '';
+                UI.showToast('Refreshing clarifications...', true);
+            });
+        }
+
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 if (!tab.dataset.target) return;
@@ -61,6 +128,12 @@ window.PC2.Main = (function () {
 
                 if (tab.dataset.target === 'tab-runs') {
                     API.fetchRuns();
+                }
+
+                if (tab.dataset.target === 'tab-view-clars') {
+                    API.fetchClarifications();
+                    document.getElementById('clar-question-text').value = '';
+                    document.getElementById('clar-answer-text').value = '';
                 }
             });
         });
@@ -163,7 +236,7 @@ window.PC2.Main = (function () {
             if (!problemLetter) { UI.showToast('Please select a problem.'); return; }
             if (!programTypeId) { UI.showToast('Please select a language.'); return; }
             if (!fileInput.files?.length) { UI.showToast('Please select a source file.'); return; }
-            if (!State.contestId) { UI.showToast('Contest ID not found.'); return; }
+            if (!State.contestPath) { UI.showToast('Contest path not found.'); return; }
             if (!State.csrfToken) { UI.showToast('CSRF token not found — try reloading.'); return; }
 
             const btn = document.getElementById('submit-btn');
@@ -185,7 +258,7 @@ window.PC2.Main = (function () {
                 const adcd1e = 'caf4f' + Math.random().toString(36).substr(2, 9);
 
                 const submitResp = await fetch(
-                    `https://codeforces.com/contest/${State.contestId}/problem/${problemLetter}` +
+                    `https://codeforces.com${State.contestPath}/problem/${problemLetter}` +
                     `?csrf_token=${State.csrfToken}&adcd1e=${adcd1e}`,
                     { method: 'POST', body: fd, credentials: 'include', redirect: 'manual' }
                 );
@@ -199,7 +272,7 @@ window.PC2.Main = (function () {
                 let runId = '—';
                 try {
                     const myHtml = await fetch(
-                        `https://codeforces.com/contest/${State.contestId}/my`,
+                        `https://codeforces.com${State.contestPath}/my`,
                         { credentials: 'include' }
                     ).then(r => r.text());
 
