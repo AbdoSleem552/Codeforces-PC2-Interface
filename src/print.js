@@ -1,3 +1,6 @@
+// PDF theme CSS registry is defined in src/pdf-themes.js (loaded before this file).
+// Access themes via:  window.PC2.PDF_THEMES['themeId'].css
+
 window.PC2 = window.PC2 || {};
 
 window.PC2.Print = (function () {
@@ -103,8 +106,7 @@ window.PC2.Print = (function () {
             // Remove redundant CF section titles inside I/O blocks
             prob.querySelectorAll('.input .title, .output .title').forEach(el => el.remove());
 
-            // ── KEY STEP: pre-render all $$$...$$$  into static KaTeX HTML ──
-            // The returned string is pure HTML with no $$$ delimiters left.
+            // Pre-render all $$$...$$$  into static KaTeX HTML
             return renderMath(prob.outerHTML);
 
         } catch (err) {
@@ -192,112 +194,22 @@ window.PC2.Print = (function () {
             .map(el => `<div class="problem-wrap">${el.outerHTML}</div>`)
             .join('');
 
-        // Open a self-contained print window.
-        // Because math is already static KaTeX HTML, all we need is the KaTeX CSS.
-        // No JavaScript math engine is needed — the window can print immediately on load.
+        // ── Read theme + custom CSS from data attributes ───────────────────────
+        // inject-env.js (isolated world) bridges these from chrome.storage.local
+        // because print.js runs in the MAIN world where chrome.* is unavailable.
+        const themeId   = document.documentElement.getAttribute('data-pc2-pdf-theme') || 'clean';
+        const customCss = document.documentElement.getAttribute('data-pc2-custom-print-css') || '';
 
-        const css = `
+        const theme     = (window.PC2.PDF_THEMES || {})[themeId]
+                       || (window.PC2.PDF_THEMES || {})['clean']
+                       || { css: '' };
+
+        const basePageCss = `
             *, *::before, *::after { box-sizing: border-box; }
-
-            body {
-                margin: 0;
-                padding: 40px;
-                background: #fff;
-                color: #1f2937;
-                font-family: "Times New Roman", Times, serif;
-                font-size: 15px;
-                line-height: 1.6;
-            }
-
-            .problem-wrap {
-                max-width: 860px;
-                margin: 0 auto;
-            }
-            .problem-wrap + .problem-wrap {
-                page-break-before: always;
-            }
-
-            /* ── Modern title & pills ── */
-            .pc2-modern-title {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-                font-size: 1.75rem;
-                font-weight: 700;
-                color: #111827;
-                margin: 0 0 1rem 0;
-                padding-bottom: 0.5rem;
-                border-bottom: 2px solid #e5e7eb;
-            }
-            .problem-metadata {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.75rem;
-                margin-bottom: 2rem;
-            }
-            .meta-tag {
-                background: #f3f4f6;
-                color: #4b5563;
-                padding: 0.35rem 0.75rem;
-                border-radius: 9999px;
-                font-size: 0.85rem;
-                border: 1px solid #e5e7eb;
-            }
-            .meta-tag strong { color: #111827; font-weight: 600; }
-
-            /* ── I/O sample table ── */
-            .samples-table {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-                width: 100%;
-                border-collapse: separate;
-                border-spacing: 0;
-                border: 1px solid #d1d5db;
-                border-radius: 8px;
-                overflow: hidden;
-                margin: 1.5rem 0;
-                table-layout: fixed;
-            }
-            .samples-table th {
-                background: #f9fafb;
-                font-weight: 600;
-                text-align: left;
-                padding: 0.75rem 1rem;
-                border-bottom: 1px solid #d1d5db;
-                color: #374151;
-                width: 50%;
-            }
-            .samples-table th:first-child { border-right: 1px solid #d1d5db; }
-            .samples-table td { padding: 1rem; vertical-align: top; }
-            .samples-table td:first-child { border-right: 1px solid #d1d5db; }
-            .samples-table pre {
-                white-space: pre-wrap;
-                word-wrap: break-word;
-                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-                font-size: 0.875rem;
-                margin: 0;
-                color: #1f2937;
-            }
-
-            /* ── Body text ── */
-            .problem-statement p { margin-bottom: 1rem; }
-            .section-title {
-                font-weight: bold;
-                font-size: 1.1rem;
-                margin: 1.2rem 0 0.5rem;
-            }
-
-            /* ── KaTeX display blocks ── */
-            .katex-display { margin: 1rem 0; overflow-x: auto; }
-
-            @page {
-                margin: 0;
-            }
-
+            @page { margin: 0; }
             @media print {
                 body { padding: 15mm; }
-                * {
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                 .katex-display { overflow: visible !important; }
             }
         `;
@@ -308,13 +220,15 @@ window.PC2.Print = (function () {
 <meta charset="utf-8">
 <title>Contest ${State.contestId} \u2014 Problems</title>
 <link rel="stylesheet" href="${KATEX_CSS}">
-<style>${css}</style>
+<style>
+${basePageCss}
+${theme.css}
+${customCss}
+</style>
 </head>
 <body>
 ${sections}
 <script>
-// Math is already pre-rendered as static KaTeX HTML.
-// Just wait for fonts to paint, then print.
 window.addEventListener('load', function () {
     setTimeout(function () { window.print(); }, 250);
 });
@@ -325,7 +239,7 @@ window.addEventListener('load', function () {
         const blob = new Blob([html], { type: 'text/html' });
         const blobUrl = URL.createObjectURL(blob);
         const win = window.open(blobUrl, '_blank', 'width=960,height=720');
-        
+
         if (!win) {
             UI.showToast('Popup blocked — allow popups for Codeforces and try again.');
             return;

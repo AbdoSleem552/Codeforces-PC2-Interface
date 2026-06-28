@@ -145,6 +145,37 @@
       transform: translateX(22px);
     }
 
+    .settings-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 0;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+
+    .settings-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: var(--text-color);
+      transform: translateY(-1px);
+    }
+
+    .settings-btn .icon {
+      font-size: 14px;
+    }
+
     .footer {
       text-align: center;
       font-size: 11px;
@@ -184,6 +215,10 @@
       <span class="slider"></span>
     </label>
   </div>
+
+  <button class="settings-btn" id="open-settings-btn">
+    <span class="icon">⚙️</span> Open Settings
+  </button>
 
   <div class="footer">
     <span>Need help? Visit <a href="https://github.com/AbdoSleem552/Codeforces-PC2-Interface"

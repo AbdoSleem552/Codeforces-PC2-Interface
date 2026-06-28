@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Open Options page
+  document.getElementById('open-settings-btn').addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
+
   function updateStatusText(enabled) {
     if (enabled) {
       statusDesc.textContent = "Active";

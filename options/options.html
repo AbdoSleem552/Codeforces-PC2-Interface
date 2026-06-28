@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PC²  — Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Design Tokens ─────────────────────────────────── */
+    :root {
+      --bg:          #0f0f1a;
+      --surface:     #1a1a2e;
+      --surface-2:   #22223b;
+      --border:      rgba(255,255,255,0.08);
+      --border-hover:rgba(255,255,255,0.18);
+      --accent:      #4caf50;
+      --accent-dim:  rgba(76,175,80,0.15);
+      --accent-hover:#45a049;
+      --danger:      #f44336;
+      --text:        #f0f0fa;
+      --text-muted:  #8888aa;
+      --text-dim:    #555577;
+      --radius-sm:   8px;
+      --radius-md:   12px;
+      --radius-lg:   16px;
+      --shadow:      0 8px 32px rgba(0,0,0,0.4);
+      --transition:  0.2s ease;
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 64px 1fr;
+    }
+
+    /* ─── Top Bar ───────────────────────────────────────── */
+    #topbar {
+      grid-column: 1 / -1;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 14px;
+      backdrop-filter: blur(10px);
+    }
+
+    #topbar .logo {
+      width: 32px; height: 32px; border-radius: 6px;
+    }
+
+    #topbar .brand {
+      font-size: 15px;
+      font-weight: 700;
+      background: linear-gradient(to right, #fff, #cde1f5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #topbar .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: 6px;
+      -webkit-text-fill-color: var(--text-muted);
+    }
+
+    #topbar .spacer { flex: 1; }
+
+    #topbar .save-badge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      animation: fadeIn 0.3s ease;
+    }
+
+    #topbar .save-badge.visible { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    /* ─── Sidebar ───────────────────────────────────────── */
+    #sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+    }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 8px 12px 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: background var(--transition), color var(--transition);
+      user-select: none;
+    }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .nav-item .icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* ─── Main Content ──────────────────────────────────── */
+    #content {
+      padding: 36px 48px;
+      overflow-y: auto;
+    }
+
+    .settings-section {
+      display: none;
+      animation: sectionIn 0.2s ease;
+    }
+
+    .settings-section.active { display: block; }
+
+    @keyframes sectionIn {
+      from { opacity: 0; transform: translateX(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .section-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    /* ─── Setting Cards ─────────────────────────────────── */
+    .settings-group {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .settings-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      padding: 14px 20px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+
+    .setting-row:last-child { border-bottom: none; }
+    .setting-row:hover { background: rgba(255,255,255,0.025); }
+
+    .setting-info { flex: 1; padding-right: 24px; }
+
+    .setting-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .setting-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* ─── Toggle Switch ─────────────────────────────────── */
+    .toggle {
+      position: relative;
+      width: 46px; height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.12);
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      left: 3px; top: 3px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      transition: transform 0.3s;
+    }
+
+    .toggle input:checked + .toggle-track { background: var(--accent); }
+    .toggle input:checked + .toggle-track::after { transform: translateX(22px); }
+
+    /* ─── Range Slider ──────────────────────────────────── */
+    .range-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.12);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .range-display {
+      min-width: 48px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    /* ─── Select ────────────────────────────────────────── */
+    select.setting-select {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      min-width: 160px;
+      transition: border-color var(--transition);
+    }
+
+    select.setting-select:hover { border-color: var(--border-hover); }
+    select.setting-select:focus { border-color: var(--accent); }
+
+    /* ─── Code Editor (textarea) ────────────────────────── */
+    .code-editor-wrapper {
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .code-editor-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    textarea.code-editor {
+      width: 100%;
+      min-height: 180px;
+      background: #0a0a12;
+      color: #e0e0ff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    textarea.code-editor:focus { border-color: var(--accent); }
+
+    /* Setting row full-width variant */
+    .setting-row.block {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .setting-row.block .setting-info { padding-right: 0; margin-bottom: 0; }
+
+    /* ─── Action Buttons ────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(76,175,80,0.35); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border-hover); }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid rgba(244,67,54,0.3);
+    }
+    .btn-danger:hover { background: rgba(244,67,54,0.1); }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* ─── Reset / About / Status ────────────────────────── */
+    .about-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .about-icon { font-size: 52px; line-height: 1; }
+
+    .about-meta h2 { font-size: 18px; margin-bottom: 8px; }
+    .about-meta p  { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 6px; }
+    .about-meta a  { color: #90caf9; text-decoration: none; }
+    .about-meta a:hover { text-decoration: underline; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green { background: var(--accent-dim); color: var(--accent); }
+    .badge-blue  { background: rgba(33,150,243,0.15); color: #64b5f6; }
+
+    /* ─── Scrollbar ─────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* ─── Notification toast ────────────────────────────── */
+    #save-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    /* ─── PDF Theme Cards ───────────────────────────────── */
+    .theme-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      cursor: pointer;
+      transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+      background: var(--surface-2);
+      position: relative;
+    }
+
+    .theme-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .theme-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .theme-card .check-mark {
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-card.selected .check-mark { display: flex; }
+
+    .theme-preview {
+      height: 80px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px;
+    }
+
+    .preview-title-bar {
+      height: 8px;
+      border-radius: 3px;
+      width: 60%;
+    }
+
+    .preview-pill-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .preview-pill {
+      height: 6px;
+      border-radius: 10px;
+      width: 28px;
+    }
+
+    .preview-line {
+      height: 4px;
+      border-radius: 2px;
+      width: 90%;
+      opacity: 0.4;
+    }
+
+    .preview-line.short { width: 65%; }
+
+    .theme-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .theme-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    #save-toast.show { opacity: 1; transform: none; }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Bar -->
+  <header id="topbar">
+    <img src="../popup/icon.png" class="logo" alt="PC2 Logo">
+    <span class="brand">Codeforces PC² Interface</span>
+    <span class="brand-sub">Settings</span>
+    <div class="spacer"></div>
+    <div id="save-badge" class="save-badge">
+      <span>✓</span><span>Changes saved</span>
+    </div>
+  </header>
+
+  <!-- Sidebar Navigation -->
+  <nav id="sidebar">
+    <div class="nav-section-label">General</div>
+    <div class="nav-item active" data-section="appearance">
+      <span class="icon">🎨</span> Appearance
+    </div>
+    <div class="nav-item" data-section="interface">
+      <span class="icon">🪟</span> Interface
+    </div>
+
+    <div class="nav-section-label" style="margin-top:8px;">Advanced</div>
+    <div class="nav-item" data-section="printing">
+      <span class="icon">🖨️</span> Printing & PDF
+    </div>
+    <div class="nav-item" data-section="shortcuts">
+      <span class="icon">⌨️</span> Keyboard
+    </div>
+    <div class="nav-item" data-section="data">
+      <span class="icon">💾</span> Data & Reset
+    </div>
+
+    <div class="nav-section-label" style="margin-top:8px;">Info</div>
+    <div class="nav-item" data-section="about">
+      <span class="icon">ℹ️</span> About
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="content">
+
+    <!-- ── APPEARANCE ────────────────────────────────────── -->
+    <section class="settings-section active" id="section-appearance">
+      <div class="section-title">Appearance</div>
+      <div class="section-desc">Customize the look and feel of the PC² interface.</div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Visuals</div>
+        <div class="setting-row" data-setting="fancyBg" data-type="toggle">
+          <div class="setting-info">
+            <div class="setting-label">Fancy Background</div>
+            <div class="setting-hint">Show animated balloons and colored verdict overlays when a judgment arrives.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="opt-fancy-bg">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="setting-row" data-setting="theme" data-type="select">
+          <div class="setting-info">
+            <div class="setting-label">Color Theme</div>
+            <div class="setting-hint">Choose between the classic Win9x look or a modern dark variant.</div>
+          </div>
+          <select class="setting-select" id="opt-theme">
+            <option value="classic">Classic (Win9x)</option>
+            <option value="dark">Dark Mode</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Window</div>
+        <div class="setting-row" data-setting="scale" data-type="range">
+          <div class="setting-info">
+            <div class="setting-label">Window Scale</div>
+            <div class="setting-hint">Zoom the PC² window to fit your display.</div>
+          </div>
+          <div class="range-wrapper">
+            <input type="range" id="opt-scale" min="0.5" max="2.0" step="0.05" value="1.0" style="width:180px">
+            <span class="range-display" id="opt-scale-val">100%</span>
+          </div>
+        </div>
+        <div class="setting-row" data-setting="startMaximized" data-type="toggle">
+          <div class="setting-info">
+            <div class="setting-label">Start Maximized</div>
+            <div class="setting-hint">Open the PC² window at its maximum size when a contest page loads.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="opt-start-maximized">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── INTERFACE ─────────────────────────────────────── -->
+    <section class="settings-section" id="section-interface">
+      <div class="section-title">Interface</div>
+      <div class="section-desc">Control how tabs and panels behave.</div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Behavior</div>
+        <div class="setting-row" data-setting="autoRefreshRuns" data-type="toggle">
+          <div class="setting-info">
+            <div class="setting-label">Auto-Refresh Runs</div>
+            <div class="setting-hint">Automatically poll for new run statuses every 30 seconds in the "View Runs" tab.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="opt-auto-refresh">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="setting-row" data-setting="defaultTab" data-type="select">
+          <div class="setting-info">
+            <div class="setting-label">Default Tab</div>
+            <div class="setting-hint">Which tab to show when the PC² window first opens.</div>
+          </div>
+          <select class="setting-select" id="opt-default-tab">
+            <option value="tab-submit">Submit Run</option>
+            <option value="tab-runs">View Runs</option>
+            <option value="tab-request-clar">Request Clarification</option>
+            <option value="tab-view-clars">View Clarifications</option>
+          </select>
+        </div>
+        <div class="setting-row" data-setting="showSubmitConfirm" data-type="toggle">
+          <div class="setting-info">
+            <div class="setting-label">Confirm Before Submit</div>
+            <div class="setting-hint">Show a confirmation dialog before sending a submission to prevent accidents.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="opt-submit-confirm">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PRINTING ──────────────────────────────────────── -->
+    <section class="settings-section" id="section-printing">
+      <div class="section-title">Printing & PDF</div>
+      <div class="section-desc">Choose a visual theme for exported PDFs and optionally add custom CSS overrides applied on top.</div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">PDF Theme</div>
+        <div style="padding: 20px;">
+          <div id="theme-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap:14px;">
+            <!-- Populated by options.js from PDF_THEMES registry -->
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Custom CSS Override</div>
+        <div class="setting-row block" data-setting="customPrintCss" data-type="textarea">
+          <div class="setting-info">
+            <div class="setting-label">Extra CSS</div>
+            <div class="setting-hint">Injected after the chosen theme — anything here wins. Leave empty if not needed.</div>
+          </div>
+          <div class="code-editor-wrapper">
+            <div class="code-editor-label">
+              <span>CSS</span>
+              <button class="btn btn-ghost" id="btn-clear-css" style="padding:3px 10px; font-size:11px;">Clear</button>
+            </div>
+            <textarea class="code-editor" id="opt-custom-css" placeholder="/* Example: hide problem rating */&#10;.problem-rating { display: none; }"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Layout</div>
+        <div class="setting-row" data-setting="printPageSize" data-type="select">
+          <div class="setting-info">
+            <div class="setting-label">Paper Size</div>
+            <div class="setting-hint">Default paper size used when exporting to PDF.</div>
+          </div>
+          <select class="setting-select" id="opt-paper-size">
+            <option value="A4">A4</option>
+            <option value="letter">Letter (US)</option>
+            <option value="legal">Legal</option>
+          </select>
+        </div>
+        <div class="setting-row" data-setting="printShowHeader" data-type="toggle">
+          <div class="setting-info">
+            <div class="setting-label">Show Print Header</div>
+            <div class="setting-hint">Include the problem letter and contest ID as a header on each printed page.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="opt-print-header">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── KEYBOARD ──────────────────────────────────────── -->
+    <section class="settings-section" id="section-shortcuts">
+      <div class="section-title">Keyboard</div>
+      <div class="section-desc">Reference for built-in keyboard shortcuts. Custom hotkeys coming soon.</div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Built-in Shortcuts</div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="setting-label">Toggle PC² Interface</div><div class="setting-hint">Enable or disable the extension on the current Codeforces page.</div></div>
+          <span class="badge badge-blue">Popup → Toggle</span>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="setting-label">Print All Problems</div><div class="setting-hint">Export all contest problems to a single PDF.</div></div>
+          <span class="badge badge-blue">🖨️ button in header</span>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><div class="setting-label">Open Settings</div><div class="setting-hint">Open this settings page from the extension popup.</div></div>
+          <span class="badge badge-blue">Popup → Settings</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── DATA ─────────────────────────────────────────── -->
+    <section class="settings-section" id="section-data">
+      <div class="section-title">Data & Reset</div>
+      <div class="section-desc">Manage stored preferences and reset to factory defaults.</div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Storage</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Export Settings</div>
+            <div class="setting-hint">Save your current configuration as a JSON file for backup or transfer.</div>
+          </div>
+          <button class="btn btn-ghost" id="btn-export">⬇ Export</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Import Settings</div>
+            <div class="setting-hint">Restore settings from a previously exported JSON file.</div>
+          </div>
+          <button class="btn btn-ghost" id="btn-import">⬆ Import</button>
+          <input type="file" id="import-file" accept=".json" style="display:none">
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Reset</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Reset All Settings</div>
+            <div class="setting-hint">Restore every setting to its original default value. This cannot be undone.</div>
+          </div>
+          <button class="btn btn-danger" id="btn-reset">↺ Reset to Defaults</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ABOUT ─────────────────────────────────────────── -->
+    <section class="settings-section" id="section-about">
+      <div class="section-title">About</div>
+      <div class="section-desc">Extension information and credits.</div>
+
+      <div class="about-box">
+        <div class="about-icon">☕</div>
+        <div class="about-meta">
+          <h2>Codeforces PC² Interface</h2>
+          <p><span class="badge badge-green">v1.0.0</span>&nbsp; <span class="badge badge-blue">Codeforces Edition</span></p>
+          <p style="margin-top:12px;">A custom browser extension that replaces Codeforces contest pages with a faithful emulation of the classic PC² (Programming Contest Control) team interface — complete with submission, verdict polling, clarifications, and live countdown.</p>
+          <p><b>Developer:</b> Abdo Sleem</p>
+          <p><a href="https://github.com/AbdoSleem552/Codeforces-PC2-Interface" target="_blank">📂 GitHub Repository</a></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Save Toast -->
+  <div id="save-toast">✓ Settings saved</div>
+
+  <script src="themes-meta.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

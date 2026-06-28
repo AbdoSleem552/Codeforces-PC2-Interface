@@ -4,8 +4,10 @@
   "version": "1.0",
   "description": "Replaces Codeforces contest pages with a PC^2-style interface.",
   "permissions": [
-    "storage"
+    "storage",
+    "tabs"
   ],
+  "options_page": "options/options.html",
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": "popup/icon.png"
@@ -33,6 +35,7 @@
         "src/state.js",
         "src/ui.js",
         "src/api.js",
+        "src/pdf-themes.js",
         "src/print.js",
         "src/main.js"
       ],
