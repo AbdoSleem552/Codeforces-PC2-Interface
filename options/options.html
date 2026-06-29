@@ -342,6 +342,146 @@
 
     .setting-row.block .setting-info { padding-right: 0; margin-bottom: 0; }
 
+    /* ─── Per-Verdict Sound Cards ────────────────────────── */
+    .verdict-sounds-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .verdict-sound-card {
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      transition: background var(--transition);
+    }
+
+    .verdict-sound-card:last-child { border-bottom: none; }
+
+    .verdict-sound-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--transition);
+    }
+
+    .verdict-sound-header:hover { background: rgba(255,255,255,0.04); }
+
+    .verdict-sound-emoji {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .verdict-sound-label {
+      flex: 1;
+    }
+
+    .verdict-sound-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .verdict-sound-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .verdict-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: 0.4px;
+      flex-shrink: 0;
+    }
+
+    .verdict-sound-count {
+      font-size: 10px;
+      color: var(--text-dim);
+      flex-shrink: 0;
+      min-width: 52px;
+      text-align: right;
+    }
+
+    .verdict-sound-chevron {
+      font-size: 10px;
+      color: var(--text-dim);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .verdict-sound-card.open .verdict-sound-chevron {
+      transform: rotate(180deg);
+    }
+
+    .verdict-sound-body {
+      display: none;
+      padding: 0 20px 16px 56px;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .verdict-sound-card.open .verdict-sound-body {
+      display: flex;
+    }
+
+    .verdict-sound-body textarea {
+      width: 100%;
+      min-height: 64px;
+      background: #08080f;
+      color: #d0d0f0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 11.5px;
+      line-height: 1.55;
+      resize: vertical;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .verdict-sound-body textarea:focus { border-color: var(--accent); }
+
+    .verdict-sound-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-test-sound {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      transition: all var(--transition);
+    }
+
+    .btn-test-sound:hover {
+      color: var(--text);
+      border-color: var(--border-hover);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .sound-url-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
     /* ─── Action Buttons ────────────────────────────────── */
     .btn {
       display: inline-flex;
@@ -522,6 +662,134 @@
     }
 
     #save-toast.show { opacity: 1; transform: none; }
+
+    /* ─── Sound Library Cards ───────────────────────────────── */
+    .sl-card {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      transition: background var(--transition);
+    }
+    .sl-card:last-child { border-bottom: none; }
+    .sl-card:hover { background: rgba(255,255,255,0.02); }
+
+    .sl-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 20px 12px;
+      cursor: pointer;
+    }
+
+    .sl-card-drag {
+      font-size: 18px;
+      color: var(--text-dim);
+      cursor: grab;
+      padding-top: 4px;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .sl-card-fields {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .sl-url-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .sl-input {
+      width: 100%;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--transition);
+      min-width: 0;
+    }
+    .sl-input:focus { border-color: var(--accent); }
+
+    .sl-url { font-family: "Consolas", "Fira Code", monospace; font-size: 12px; }
+
+    .sl-btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px; height: 34px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 15px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .sl-btn:hover { color: var(--text); border-color: var(--border-hover); background: rgba(255,255,255,0.06); }
+    .sl-remove:hover { color: #f44336; border-color: rgba(244,67,54,0.4); background: rgba(244,67,54,0.08); }
+
+    .sl-card-body {
+      padding: 0 20px 14px 50px;
+      display: none;
+    }
+    .sl-card.open .sl-card-body { display: block; }
+
+    .sl-card-toggle {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 10px;
+      padding: 8px;
+      margin-left: 4px;
+      transition: transform var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sl-card.open .sl-card-toggle { transform: rotate(180deg); }
+
+    .sl-verdict-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .sl-verdict-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .sl-verdict-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 9px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+      color: var(--text-dim);
+      background: transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .sl-verdict-chip:hover { border-color: var(--border-hover); color: var(--text-muted); background: rgba(255,255,255,0.04); }
+    .sl-verdict-chip.active { font-weight: 600; }
   </style>
 </head>
 
@@ -549,6 +817,9 @@
     </div>
 
     <div class="nav-section-label" style="margin-top:8px;">Advanced</div>
+    <div class="nav-item" data-section="sounds">
+      <span class="icon">🔊</span> Sound Effects
+    </div>
     <div class="nav-item" data-section="printing">
       <span class="icon">🖨️</span> Printing & PDF
     </div>
@@ -574,7 +845,7 @@
       <div class="section-desc">Customize the look and feel of the PC² interface.</div>
 
       <div class="settings-group">
-        <div class="settings-group-label">Visuals</div>
+        <div class="settings-group-label">Visuals & Audio</div>
         <div class="setting-row" data-setting="fancyBg" data-type="toggle">
           <div class="setting-info">
             <div class="setting-label">Fancy Background</div>
@@ -596,6 +867,7 @@
           </select>
         </div>
       </div>
+
 
       <div class="settings-group">
         <div class="settings-group-label">Window</div>
@@ -660,6 +932,60 @@
             <input type="checkbox" id="opt-submit-confirm">
             <span class="toggle-track"></span>
           </label>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── SOUND EFFECTS ────────────────────────────────────── -->
+    <section class="settings-section" id="section-sounds">
+      <div class="section-title">Sound Effects</div>
+      <div class="section-desc">Add audio clips and choose which verdicts or actions they play on. Multiple sounds can target the same verdict or action — one is picked randomly each time.</div>
+
+      <div class="settings-group" style="margin-bottom:16px;">
+        <div class="setting-row" data-setting="pc2_sounds_enabled" data-type="toggle">
+          <div class="setting-info">
+            <div class="setting-label">Enable Sound Effects</div>
+            <div class="setting-hint">Master switch to turn all extension audio feedback on or off.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="opt-sounds-enabled">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-label" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>&#128266; Sound Library</span>
+          <button class="btn btn-primary" id="btn-add-sound" style="padding:5px 14px;font-size:12px;">
+            + Add Sound
+          </button>
+        </div>
+
+        <!-- Empty state -->
+        <div id="sound-library-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:12px;">
+          <div style="font-size:48px;">&#127925;</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);">No sounds yet</div>
+          <div style="font-size:12px;color:var(--text-muted);text-align:center;max-width:300px;">
+            Click <strong style="color:var(--accent);">+ Add Sound</strong> to create your first entry.
+            Each sound has a title, a URL, and a set of verdicts or actions it plays for.
+          </div>
+        </div>
+
+        <!-- Sound cards list -->
+        <div id="sound-library-list" style="display:flex;flex-direction:column;gap:0;"></div>
+      </div>
+
+      <div class="settings-group" style="margin-top:16px;">
+        <div class="settings-group-label">How it works</div>
+        <div style="padding:16px 20px;font-size:12px;color:var(--text-muted);line-height:1.7;">
+          <ul style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:6px;">
+            <li>Add a <strong style="color:var(--text);">sound</strong> with a title, a direct audio URL (.mp3, .ogg, .wav) or a local extension folder path (e.g. <code>assets/win.mp3</code>), and tick the verdicts/actions it plays on.</li>
+            <li>When a verdict arrives, <strong style="color:var(--text);">all matching sounds</strong> are collected and <strong style="color:var(--text);">one is picked at random</strong>.</li>
+            <li>You can assign the same sound to multiple verdicts, or give each verdict its own dedicated sounds.</li>
+            <li>Press <strong style="color:var(--text);">&#128266; Preview</strong> on any card to test the audio directly from this page.</li>
+          </ul>
         </div>
       </div>
     </section>
@@ -802,6 +1128,7 @@
   <!-- Save Toast -->
   <div id="save-toast">✓ Settings saved</div>
 
+  <script src="../src/config.js"></script>
   <script src="themes-meta.js"></script>
   <script src="options.js"></script>
 </body>

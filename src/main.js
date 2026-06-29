@@ -204,8 +204,13 @@ window.PC2.Main = (function () {
             function updateTime() {
                 if (State.countdownSeconds <= 0) {
                     timeLeftEl.textContent = State.isBeforeContest ? 'STARTED' : 'FINISHED';
-                    if (State.countdownRedirect) window.location.href = State.countdownRedirect;
-                    else window.location.reload();
+                    UI.playSoundForEvent(State.isBeforeContest ? 'action_start' : 'action_finish');
+                    
+                    // Delay reload slightly to allow the sound to play
+                    setTimeout(() => {
+                        if (State.countdownRedirect) window.location.href = State.countdownRedirect;
+                        else window.location.reload();
+                    }, 2500);
                     return;
                 }
                 State.countdownSeconds--;
@@ -289,6 +294,7 @@ window.PC2.Main = (function () {
                         } catch (_) { }
 
                         UI.showDialog({ runId, problem: problemLetter, language: langText });
+                        UI.playSoundForEvent('action_submit');
                         API.pollVerdict(runId, problemLetter, langText);
 
                     } catch (err) {

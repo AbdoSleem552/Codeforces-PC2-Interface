@@ -18,15 +18,31 @@ const SETTINGS_REGISTRY = [
   // ── Appearance ──────────────────────────────────────────────────────────────
   {
     key: 'pc2_fancy_bg',
-    default: true,
+    default: PC2_DEFAULT_CONFIG.pc2_fancy_bg,
     elementId: 'opt-fancy-bg',
     type: 'toggle',
     read:  (el) => el.checked,
     write: (el, v) => { el.checked = !!v; },
   },
   {
+    key: 'pc2_sounds_enabled',
+    default: PC2_DEFAULT_CONFIG.pc2_sounds_enabled,
+    elementId: 'opt-sounds-enabled',
+    type: 'toggle',
+    read:  (el) => el.checked,
+    write: (el, v) => { el.checked = !!v; },
+  },
+  {
+    key: 'pc2_sound_library',
+    default: JSON.stringify(PC2_DEFAULT_CONFIG.pc2_sound_library),
+    elementId: null,         // custom control — managed by buildSoundLibrary()
+    type: 'sound-library',
+    read:  () => readSoundLibraryFromDOM(),
+    write: (_, v) => writeSoundLibraryToDOM(v),
+  },
+  {
     key: 'pc2_theme',
-    default: 'classic',
+    default: PC2_DEFAULT_CONFIG.pc2_theme,
     elementId: 'opt-theme',
     type: 'select',
     read:  (el) => el.value,
@@ -34,7 +50,7 @@ const SETTINGS_REGISTRY = [
   },
   {
     key: 'pc2_scale',
-    default: 1.0,
+    default: PC2_DEFAULT_CONFIG.pc2_scale,
     elementId: 'opt-scale',
     type: 'range',
     read:  (el) => parseFloat(el.value),
@@ -48,7 +64,7 @@ const SETTINGS_REGISTRY = [
   },
   {
     key: 'pc2_start_maximized',
-    default: false,
+    default: PC2_DEFAULT_CONFIG.pc2_start_maximized,
     elementId: 'opt-start-maximized',
     type: 'toggle',
     read:  (el) => el.checked,
@@ -58,7 +74,7 @@ const SETTINGS_REGISTRY = [
   // ── Interface ────────────────────────────────────────────────────────────────
   {
     key: 'pc2_auto_refresh_runs',
-    default: false,
+    default: PC2_DEFAULT_CONFIG.pc2_auto_refresh_runs,
     elementId: 'opt-auto-refresh',
     type: 'toggle',
     read:  (el) => el.checked,
@@ -66,7 +82,7 @@ const SETTINGS_REGISTRY = [
   },
   {
     key: 'pc2_default_tab',
-    default: 'tab-submit',
+    default: PC2_DEFAULT_CONFIG.pc2_default_tab,
     elementId: 'opt-default-tab',
     type: 'select',
     read:  (el) => el.value,
@@ -74,7 +90,7 @@ const SETTINGS_REGISTRY = [
   },
   {
     key: 'pc2_show_submit_confirm',
-    default: true,
+    default: PC2_DEFAULT_CONFIG.pc2_show_submit_confirm,
     elementId: 'opt-submit-confirm',
     type: 'toggle',
     read:  (el) => el.checked,
@@ -84,7 +100,7 @@ const SETTINGS_REGISTRY = [
   // ── Printing ─────────────────────────────────────────────────────────────────
   {
     key: 'pc2_pdf_theme',
-    default: 'clean',
+    default: PC2_DEFAULT_CONFIG.pc2_pdf_theme,
     elementId: null,          // custom control — managed by buildThemeGrid()
     type: 'theme-grid',
     read:  () => _currentTheme,
@@ -92,7 +108,7 @@ const SETTINGS_REGISTRY = [
   },
   {
     key: 'pc2_custom_print_css',
-    default: '',
+    default: PC2_DEFAULT_CONFIG.pc2_custom_print_css,
     elementId: 'opt-custom-css',
     type: 'textarea',
     read:  (el) => el.value,
@@ -100,7 +116,7 @@ const SETTINGS_REGISTRY = [
   },
   {
     key: 'pc2_print_page_size',
-    default: 'A4',
+    default: PC2_DEFAULT_CONFIG.pc2_print_page_size,
     elementId: 'opt-paper-size',
     type: 'select',
     read:  (el) => el.value,
@@ -108,7 +124,7 @@ const SETTINGS_REGISTRY = [
   },
   {
     key: 'pc2_print_show_header',
-    default: false,
+    default: PC2_DEFAULT_CONFIG.pc2_print_show_header,
     elementId: 'opt-print-header',
     type: 'toggle',
     read:  (el) => el.checked,
@@ -178,6 +194,250 @@ function selectThemeCard(themeId) {
   });
 }
 
+// ── Sound Library UI ──────────────────────────────────────────────────────────
+
+const VERDICT_DEFS = [
+  { key: 'correct',           emoji: '✅', name: 'Correct (AC)',              badge: 'AC',   badgeBg: 'rgba(0,200,80,0.18)',   badgeFg: '#4caf50' },
+  { key: 'wrong_answer',      emoji: '❌', name: 'Wrong Answer',              badge: 'WA',   badgeBg: 'rgba(244,67,54,0.15)',  badgeFg: '#ef5350' },
+  { key: 'time_limit',        emoji: '⏱️', name: 'Time Limit Exceeded',      badge: 'TLE',  badgeBg: 'rgba(255,152,0,0.15)',  badgeFg: '#ffa726' },
+  { key: 'memory_limit',      emoji: '💾', name: 'Memory Limit Exceeded',    badge: 'MLE',  badgeBg: 'rgba(255,152,0,0.15)',  badgeFg: '#ffa726' },
+  { key: 'runtime_error',     emoji: '💥', name: 'Runtime Error',            badge: 'RE',   badgeBg: 'rgba(255,87,34,0.15)',  badgeFg: '#ff7043' },
+  { key: 'compilation_error', emoji: '🔧', name: 'Compilation Error',        badge: 'CE',   badgeBg: 'rgba(103,58,183,0.15)', badgeFg: '#9575cd' },
+  { key: 'output_limit',      emoji: '📜', name: 'Output Limit Exceeded',    badge: 'OLE',  badgeBg: 'rgba(255,152,0,0.15)',  badgeFg: '#ffa726' },
+  { key: 'idleness_limit',    emoji: '💤', name: 'Idleness Limit Exceeded',  badge: 'ILE',  badgeBg: 'rgba(255,152,0,0.15)',  badgeFg: '#ffa726' },
+  { key: 'hacked',            emoji: '🛡️', name: 'Hacked',                   badge: 'HACK', badgeBg: 'rgba(33,150,243,0.15)', badgeFg: '#64b5f6' },
+  { key: 'partial',           emoji: '🏅', name: 'Partial Score',            badge: 'PC',   badgeBg: 'rgba(255,235,59,0.15)', badgeFg: '#fdd835' },
+  { key: 'skipped',           emoji: '⏭️', name: 'Skipped',                  badge: 'SKP',  badgeBg: 'rgba(120,120,150,0.15)',badgeFg: '#9090aa' },
+];
+
+const ACTION_DEFS = [
+  { key: 'action_start',  emoji: '🏁', name: 'Contest Started',      badge: 'START',  badgeBg: 'rgba(0,188,212,0.15)',  badgeFg: '#26c6da' },
+  { key: 'action_submit', emoji: '🚀', name: 'Solution Submitted',   badge: 'SUBMIT', badgeBg: 'rgba(156,39,176,0.15)', badgeFg: '#ab47bc' },
+  { key: 'action_finish', emoji: '🛑', name: 'Contest Finished',     badge: 'END',    badgeBg: 'rgba(96,125,139,0.15)', badgeFg: '#78909c' },
+];
+
+let _soundLibrary = []; // in-memory copy
+const _previewAudioCache = {};
+let _draggedCard = null;
+
+function buildSoundLibrary(jsonStr) {
+  try { _soundLibrary = JSON.parse(jsonStr || '[]'); } catch (_) { _soundLibrary = []; }
+  const list = document.getElementById('sound-library-list');
+  if (!list) return;
+  list.innerHTML = '';
+  _soundLibrary.forEach((sound) => addSoundCard(sound, false));
+  updateEmptyState();
+}
+
+function updateEmptyState() {
+  const empty = document.getElementById('sound-library-empty');
+  const list  = document.getElementById('sound-library-list');
+  if (!empty || !list) return;
+  empty.style.display = list.children.length === 0 ? 'flex' : 'none';
+}
+
+function addSoundCard(sound, saveNow = true) {
+  const list = document.getElementById('sound-library-list');
+  if (!list) return;
+
+  if (!sound.id) sound.id = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  if (!_soundLibrary.find(s => s.id === sound.id)) {
+    _soundLibrary.push(sound);
+  }
+
+  const card = document.createElement('div');
+  card.className = 'sl-card';
+  if (saveNow) card.classList.add('open');
+  card.dataset.soundId = sound.id;
+
+  // Build checkboxes HTML
+  const buildChipsHtml = (defs) => defs.map(def => {
+    const checked = Array.isArray(sound.verdicts) && sound.verdicts.includes(def.key) ? 'checked' : '';
+    return `<label class="sl-verdict-chip ${checked ? 'active' : ''}"
+              title="${def.name}"
+              style="${checked ? `background:${def.badgeBg};color:${def.badgeFg};border-color:${def.badgeFg}40;` : ''}">
+              <input type="checkbox" data-key="${def.key}" ${checked} style="display:none">
+              <span>${def.emoji}</span>
+              <span style="font-size:9px;font-weight:700;">${def.badge}</span>
+            </label>`;
+  }).join('');
+
+  const verdictsHtml = buildChipsHtml(VERDICT_DEFS);
+  const actionsHtml = buildChipsHtml(ACTION_DEFS);
+
+  card.innerHTML = `
+    <div class="sl-card-header">
+      <div class="sl-card-drag">⠿</div>
+      <label class="toggle" style="transform: scale(0.75); margin-right: 8px; flex-shrink: 0;" title="Enable/Disable this sound">
+        <input type="checkbox" class="sl-enabled-toggle" ${sound.enabled !== false ? 'checked' : ''}>
+        <span class="toggle-track"></span>
+      </label>
+      <div class="sl-card-fields">
+        <input class="sl-input sl-title" type="text" placeholder="Sound title (e.g. Victory Fanfare)"
+               value="${escHtml(sound.title || '')}" spellcheck="false">
+      </div>
+      <button class="sl-card-toggle" title="Toggle details">▼</button>
+    </div>
+    <div class="sl-card-body">
+      <div class="sl-url-row" style="margin-bottom: 14px;">
+        <input class="sl-input sl-url" type="url" placeholder="https://example.com/sound.mp3"
+               value="${escHtml(sound.url || '')}" spellcheck="false">
+        <button class="sl-btn sl-preview" title="Preview sound">🔊</button>
+        <button class="sl-btn sl-remove" title="Remove sound">🗑</button>
+      </div>
+      <div class="sl-verdict-label">Trigger on verdicts:</div>
+      <div class="sl-verdict-chips" style="margin-bottom: 12px;">${verdictsHtml}</div>
+      <div class="sl-verdict-label">Trigger on actions:</div>
+      <div class="sl-verdict-chips">${actionsHtml}</div>
+    </div>
+  `;
+
+  // Toggle open/close (clicking the header)
+  card.querySelector('.sl-card-header').addEventListener('click', (e) => {
+    // Prevent toggling when clicking inputs or specific buttons
+    if (!e.target.closest('.sl-input') && !e.target.closest('.sl-btn')) {
+      card.classList.toggle('open');
+    }
+  });
+
+  // Verdict chip toggle
+  card.querySelectorAll('.sl-verdict-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const cb = chip.querySelector('input[type=checkbox]');
+      cb.checked = !cb.checked;
+      const def = VERDICT_DEFS.find(d => d.key === cb.dataset.key) || ACTION_DEFS.find(d => d.key === cb.dataset.key);
+      if (cb.checked) {
+        chip.classList.add('active');
+        chip.style.cssText = `background:${def.badgeBg};color:${def.badgeFg};border-color:${def.badgeFg}40;`;
+      } else {
+        chip.classList.remove('active');
+        chip.style.cssText = '';
+      }
+      syncSoundFromCard(card);
+      scheduleSave();
+    });
+  });
+
+  // Title/URL input change
+  card.querySelector('.sl-title').addEventListener('input', () => { syncSoundFromCard(card); scheduleSave(); });
+  card.querySelector('.sl-url').addEventListener('input',  () => { syncSoundFromCard(card); scheduleSave(); });
+
+  // Enabled toggle
+  const enabledToggle = card.querySelector('.sl-enabled-toggle');
+  if (enabledToggle) {
+    enabledToggle.addEventListener('change', () => {
+      syncSoundFromCard(card);
+      scheduleSave();
+      card.style.opacity = enabledToggle.checked ? '1' : '0.5';
+    });
+    card.style.opacity = enabledToggle.checked ? '1' : '0.5';
+  }
+
+  // Preview
+  card.querySelector('.sl-preview').addEventListener('click', (e) => {
+    e.stopPropagation();
+    let url = card.querySelector('.sl-url').value.trim();
+    if (!url) { showToast('Enter a URL first', true); return; }
+    
+    if (!url.startsWith('http') && !url.startsWith('data:')) {
+      url = chrome.runtime.getURL(url.replace(/^\/+/, ''));
+    }
+
+    if (!_previewAudioCache[url]) {
+      _previewAudioCache[url] = new Audio(url);
+    }
+    const audio = _previewAudioCache[url];
+    if (audio.readyState > 0) {
+      audio.currentTime = 0;
+    }
+    audio.play().catch(err => {
+      console.error(err);
+      showToast('⚠ Could not play URL', true);
+    });
+  });
+
+  // Remove
+  card.querySelector('.sl-remove').addEventListener('click', () => {
+    _soundLibrary = _soundLibrary.filter(s => s.id !== sound.id);
+    card.remove();
+    updateEmptyState();
+    scheduleSave();
+  });
+
+  // Drag & Drop Reordering
+  const dragHandle = card.querySelector('.sl-card-drag');
+  dragHandle.addEventListener('mousedown', () => { card.draggable = true; });
+  dragHandle.addEventListener('mouseup', () => { card.draggable = false; });
+  card.addEventListener('mouseleave', () => { card.draggable = false; });
+
+  card.addEventListener('dragstart', (e) => {
+    _draggedCard = card;
+    setTimeout(() => card.style.opacity = '0.4', 0);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  card.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (!_draggedCard || _draggedCard === card) return;
+    
+    const rect = card.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY < midY) {
+      list.insertBefore(_draggedCard, card);
+    } else {
+      list.insertBefore(_draggedCard, card.nextSibling);
+    }
+  });
+
+  card.addEventListener('dragend', () => {
+    const enabledToggle = _draggedCard.querySelector('.sl-enabled-toggle');
+    _draggedCard.style.opacity = (enabledToggle && enabledToggle.checked) ? '1' : '0.5';
+    _draggedCard.draggable = false;
+    _draggedCard = null;
+    
+    const newLibrary = [];
+    list.querySelectorAll('.sl-card').forEach(c => {
+      const id = c.dataset.soundId;
+      const s = _soundLibrary.find(x => x.id === id);
+      if (s) newLibrary.push(s);
+    });
+    _soundLibrary = newLibrary;
+    scheduleSave();
+  });
+
+  list.appendChild(card);
+  updateEmptyState();
+  if (saveNow) scheduleSave();
+}
+
+function syncSoundFromCard(card) {
+  const id = card.dataset.soundId;
+  const sound = _soundLibrary.find(s => s.id === id);
+  if (!sound) return;
+  sound.title = card.querySelector('.sl-title').value;
+  sound.url   = card.querySelector('.sl-url').value.trim();
+  const toggle = card.querySelector('.sl-enabled-toggle');
+  if (toggle) sound.enabled = toggle.checked;
+  sound.verdicts = Array.from(card.querySelectorAll('.sl-verdict-chip input:checked'))
+                        .map(cb => cb.dataset.key);
+}
+
+function readSoundLibraryFromDOM() {
+  // Sync all cards first
+  document.querySelectorAll('.sl-card').forEach(syncSoundFromCard);
+  return JSON.stringify(_soundLibrary);
+}
+
+function writeSoundLibraryToDOM(jsonStr) {
+  buildSoundLibrary(jsonStr);
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function updateRangeDisplay(displayId, value, format) {
@@ -192,7 +452,7 @@ function getDefaultValues() {
 function readAllFromDOM() {
   const values = {};
   for (const setting of SETTINGS_REGISTRY) {
-    if (setting.type === 'theme-grid') {
+    if (setting.type === 'theme-grid' || setting.type === 'sound-library') {
       values[setting.key] = setting.read();
       continue;
     }
@@ -205,7 +465,7 @@ function readAllFromDOM() {
 function writeAllToDOM(values) {
   for (const setting of SETTINGS_REGISTRY) {
     const val = values[setting.key] !== undefined ? values[setting.key] : setting.default;
-    if (setting.type === 'theme-grid') {
+    if (setting.type === 'theme-grid' || setting.type === 'sound-library') {
       setting.write(null, val);
       continue;
     }
@@ -286,7 +546,8 @@ function initNavigation() {
 
 function wireSettingControls() {
   for (const setting of SETTINGS_REGISTRY) {
-    if (setting.type === 'theme-grid') continue; // wired inside buildThemeGrid
+    if (setting.type === 'theme-grid') continue;  // wired inside buildThemeGrid
+    if (setting.type === 'sound-library') continue; // wired inside buildSoundLibrary
     const el = document.getElementById(setting.elementId);
     if (!el) continue;
 
@@ -372,6 +633,14 @@ async function init() {
 
   // Build theme grid first (needs stored theme id)
   buildThemeGrid(stored.pc2_pdf_theme || 'clean');
+
+  // Build sound library
+  buildSoundLibrary(stored.pc2_sound_library || '[]');
+
+  // Wire "Add Sound" button
+  document.getElementById('btn-add-sound')?.addEventListener('click', () => {
+    addSoundCard({ title: '', url: '', verdicts: [] });
+  });
 
   // Write remaining settings to DOM
   writeAllToDOM(stored);

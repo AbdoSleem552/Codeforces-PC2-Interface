@@ -316,6 +316,23 @@ window.PC2.UI = (function () {
   }
 
   function showVerdictDialog({ runId, problem, language, verdictText, verdictColor }) {
+    // Map verdict text → internal key
+    const _vt = (verdictText || '').toLowerCase();
+    let verdictKey = 'other';
+    if (_vt === 'correct')                       verdictKey = 'correct';
+    else if (_vt.includes('wrong answer'))       verdictKey = 'wrong_answer';
+    else if (_vt.includes('time-limit'))         verdictKey = 'time_limit';
+    else if (_vt.includes('memory limit'))       verdictKey = 'memory_limit';
+    else if (_vt.includes('run-time'))           verdictKey = 'runtime_error';
+    else if (_vt.includes('compilation'))        verdictKey = 'compilation_error';
+    else if (_vt.includes('output limit'))       verdictKey = 'output_limit';
+    else if (_vt.includes('idleness'))           verdictKey = 'idleness_limit';
+    else if (_vt === 'no - hacked')              verdictKey = 'hacked';
+    else if (_vt.includes('partial'))            verdictKey = 'partial';
+    else if (_vt === 'skipped')                  verdictKey = 'skipped';
+
+    playSoundForEvent(verdictKey);
+
     document.getElementById('pc2-verdict-dialog')?.remove();
     document.getElementById('pc2-verdict-overlay')?.remove();
 
@@ -491,12 +508,48 @@ window.PC2.UI = (function () {
     document.body.appendChild(dialog);
   }
 
+  const _audioCache = {};
+
+  function playSoundForEvent(eventKey) {
+    if (document.documentElement.getAttribute('data-pc2-sounds-enabled') === 'false') {
+      return;
+    }
+    
+    try {
+      const library = JSON.parse(
+        document.documentElement.getAttribute('data-pc2-sound-library') || '[]'
+      );
+      const candidates = library.filter(s =>
+        s.enabled !== false && s.url && Array.isArray(s.verdicts) && s.verdicts.includes(eventKey)
+      );
+      if (candidates.length > 0) {
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        let url = pick.url;
+        if (url && !url.startsWith('http') && !url.startsWith('data:')) {
+          const extUrl = document.documentElement.getAttribute('data-pc2-ext-url') || '';
+          url = extUrl + url.replace(/^\/+/, '');
+        }
+        
+        if (!_audioCache[url]) {
+          _audioCache[url] = new Audio(url);
+        }
+        
+        const audio = _audioCache[url];
+        if (audio.readyState > 0) {
+          audio.currentTime = 0; // Reset to start to allow rapid triggering
+        }
+        audio.play().catch(e => console.log('Error playing sound:', e));
+      }
+    } catch (e) {}
+  }
+
   return {
     injectStyles,
     buildBody,
     showToast,
     showDialog,
     showVerdictDialog,
+    playSoundForEvent,
     showConfirmDialog,
     showLoginOverlay
   };

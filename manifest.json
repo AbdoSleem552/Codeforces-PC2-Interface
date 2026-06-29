@@ -22,6 +22,7 @@
         "https://*.codeforces.com/*"
       ],
       "js": [
+        "src/config.js",
         "src/inject-env.js"
       ],
       "run_at": "document_start"
@@ -46,7 +47,10 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "pc2-styles.css"
+        "pc2-styles.css",
+        "*.mp3",
+        "*.wav",
+        "*.ogg"
       ],
       "matches": [
         "https://codeforces.com/*",
