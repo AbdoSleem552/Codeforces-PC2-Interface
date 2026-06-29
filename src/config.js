@@ -1,7 +1,7 @@
 const PC2_DEFAULT_CONFIG = {
     pc2_enabled: true,
     pc2_fancy_bg: true,
-    pc2_sounds_enabled: true,
+    pc2_sounds_enabled: false,
     pc2_sound_library: [
         {
             title: "ACPC Song",
