@@ -206,11 +206,15 @@ window.PC2.Main = (function () {
                     timeLeftEl.textContent = State.isBeforeContest ? 'STARTED' : 'FINISHED';
                     UI.playSoundForEvent(State.isBeforeContest ? 'action_start' : 'action_finish');
                     
-                    // Delay reload slightly to allow the sound to play
-                    setTimeout(() => {
-                        if (State.countdownRedirect) window.location.href = State.countdownRedirect;
-                        else window.location.reload();
-                    }, 2500);
+                    if (State.isBeforeContest) {
+                        // Must reload to load the problems
+                        setTimeout(() => {
+                            if (State.countdownRedirect) window.location.href = State.countdownRedirect;
+                            else window.location.reload();
+                        }, 2500);
+                    } else {
+                        // Contest finished: do not reload, let the user stay and hear the full audio!
+                    }
                     return;
                 }
                 State.countdownSeconds--;
